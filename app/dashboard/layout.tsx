@@ -1,0 +1,13 @@
+import { requireUser } from "@/lib/auth";
+import { AppNav } from "@/components/AppNav";
+
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const user = await requireUser();
+
+  return (
+    <div className="flex min-h-full flex-col">
+      <AppNav name={user.name} role={user.role} />
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6">{children}</main>
+    </div>
+  );
+}

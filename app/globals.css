@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+:root {
+  /* Design system: Data-Dense Dashboard (light only — factory-floor monitors, high contrast) */
+  --background: #f8fafc;
+  --foreground: #1e3a8a;
+  --surface: #ffffff;
+  --muted: #e9eef6;
+  --border: #dbeafe;
+  --primary: #1e40af;
+  --primary-foreground: #ffffff;
+  --accent: #d97706;
+  --destructive: #dc2626;
+
+  /* Mood categories: clearly distinct, none read as an alarm color */
+  --happy: #059669;
+  --happy-bg: #ecfdf5;
+  --netral: #d97706;
+  --netral-bg: #fffbeb;
+  --badmood: #ea580c;
+  --badmood-bg: #fff7ed;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-destructive: var(--destructive);
+  --color-happy: var(--happy);
+  --color-happy-bg: var(--happy-bg);
+  --color-netral: var(--netral);
+  --color-netral-bg: var(--netral-bg);
+  --color-badmood: var(--badmood);
+  --color-badmood-bg: var(--badmood-bg);
+  --font-sans: var(--font-fira-sans);
+  --font-mono: var(--font-fira-code);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
