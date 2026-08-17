@@ -46,14 +46,26 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex flex-1 items-center justify-center px-4">
-      <div className="w-full max-w-sm rounded-lg border border-border bg-surface p-8 shadow-sm">
-        <h1 className="text-xl font-semibold text-foreground">e-Mood</h1>
-        <p className="mt-1 text-sm text-slate-500">Masuk untuk mengakses dashboard atau admin.</p>
+    <div className="relative flex flex-1 items-center justify-center overflow-hidden px-4">
+      <div
+        className="pointer-events-none absolute -top-40 left-1/2 h-96 w-[36rem] -translate-x-1/2 rounded-full opacity-25 blur-3xl"
+        style={{ background: "radial-gradient(circle, var(--primary), transparent 70%)" }}
+      />
+      <div
+        className="pointer-events-none absolute bottom-[-8rem] right-[-6rem] h-80 w-80 rounded-full opacity-20 blur-3xl"
+        style={{ background: "radial-gradient(circle, var(--secondary), transparent 70%)" }}
+      />
+
+      <div className="anim-fade-up relative w-full max-w-sm rounded-2xl border border-border bg-surface/90 p-8 shadow-2xl backdrop-blur-sm">
+        <span className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-secondary text-sm font-bold text-primary-foreground shadow-[0_0_24px_-6px_var(--primary)]">
+          e
+        </span>
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">Masuk ke e-Mood</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Akses dashboard dan admin absen emosi.</p>
 
         <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
           <div>
-            <label htmlFor="email" className="mb-1 block text-sm font-medium text-slate-700">
+            <label htmlFor="email" className="mb-1.5 block text-xs font-medium text-muted-foreground">
               Email
             </label>
             <input
@@ -63,11 +75,11 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-md border border-border bg-white px-3 py-2 text-base outline-none focus:ring-2 focus:ring-primary"
+              className="w-full rounded-lg border border-border bg-surface-2 px-3.5 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary"
             />
           </div>
           <div>
-            <label htmlFor="password" className="mb-1 block text-sm font-medium text-slate-700">
+            <label htmlFor="password" className="mb-1.5 block text-xs font-medium text-muted-foreground">
               Password
             </label>
             <input
@@ -77,12 +89,12 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-md border border-border bg-white px-3 py-2 text-base outline-none focus:ring-2 focus:ring-primary"
+              className="w-full rounded-lg border border-border bg-surface-2 px-3.5 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary"
             />
           </div>
 
           {error && (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" className="anim-fade text-sm text-destructive">
               {error}
             </p>
           )}
@@ -90,7 +102,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="mt-2 h-11 cursor-pointer rounded-md bg-primary font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-1 h-11 cursor-pointer rounded-lg bg-primary font-medium text-primary-foreground transition-all duration-[var(--dur-fast)] hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? "Memproses..." : "Masuk"}
           </button>

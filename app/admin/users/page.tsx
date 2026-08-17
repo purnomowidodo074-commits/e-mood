@@ -1,6 +1,7 @@
 import { listDashboardUsers } from "@/lib/queries";
 import { setUserRoleAction } from "@/lib/actions";
 import { CreateUserForm } from "@/components/CreateUserForm";
+import { IconUserCog } from "@/components/icons";
 
 const ROLES = [
   { value: "leader", label: "Leader" },
@@ -12,40 +13,46 @@ export default async function UsersPage() {
   const users = await listDashboardUsers();
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="anim-stagger flex flex-col gap-6">
       <header>
-        <h1 className="text-lg font-semibold text-foreground">User Dashboard &amp; Admin</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">User Dashboard &amp; Admin</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Akun untuk login ke dashboard/admin (bukan member produksi — mereka absen via kiosk, FR-7.1).
         </p>
       </header>
 
-      <section className="rounded-lg border border-border bg-surface p-5">
-        <h2 className="mb-3 text-sm font-semibold text-foreground">Buat Akun Baru</h2>
+      <section className="anim-fade-up rounded-2xl border border-border bg-surface p-6">
+        <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+          <IconUserCog className="h-4 w-4 text-primary" />
+          Buat Akun Baru
+        </h2>
         <CreateUserForm />
       </section>
 
-      <section className="overflow-x-auto rounded-lg border border-border bg-surface">
+      <section className="anim-fade-up overflow-x-auto rounded-2xl border border-border bg-surface">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-slate-400">
-              <th className="px-4 py-2">Nama</th>
-              <th className="px-4 py-2">Email</th>
-              <th className="px-4 py-2">Role</th>
+            <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
+              <th className="px-5 py-3 font-medium">Nama</th>
+              <th className="px-5 py-3 font-medium">Email</th>
+              <th className="px-5 py-3 font-medium">Role</th>
             </tr>
           </thead>
           <tbody>
             {users.map((u) => (
-              <tr key={u.id} className="border-b border-border/60">
-                <td className="px-4 py-2 text-slate-800">{u.name}</td>
-                <td className="px-4 py-2 text-slate-500">{u.email}</td>
-                <td className="px-4 py-2">
+              <tr
+                key={u.id}
+                className="border-b border-border/60 transition-colors duration-[var(--dur-fast)] hover:bg-surface-2/60"
+              >
+                <td className="px-5 py-3 text-foreground/90">{u.name}</td>
+                <td className="px-5 py-3 text-muted-foreground">{u.email}</td>
+                <td className="px-5 py-3">
                   <form action={setUserRoleAction} className="flex items-center gap-2">
                     <input type="hidden" name="userId" value={u.id} />
                     <select
                       name="role"
                       defaultValue={u.role ?? ""}
-                      className="rounded-md border border-border px-2 py-1 text-sm"
+                      className="rounded-lg border border-border bg-surface-2 px-2.5 py-1.5 text-sm text-foreground outline-none focus:border-primary"
                     >
                       <option value="" disabled>
                         Belum ada role
@@ -58,7 +65,7 @@ export default async function UsersPage() {
                     </select>
                     <button
                       type="submit"
-                      className="cursor-pointer rounded-md border border-border px-2 py-1 text-xs font-medium text-slate-600 hover:bg-muted"
+                      className="cursor-pointer rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
                     >
                       Simpan
                     </button>

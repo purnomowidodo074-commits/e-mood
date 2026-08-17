@@ -13,32 +13,40 @@ export function CreateUserForm() {
 
   return (
     <form action={formAction} className="flex flex-wrap items-end gap-3">
-      <label className="text-sm text-slate-600">
-        Nama
-        <input name="name" required className="mt-1 block w-40 rounded-md border border-border px-2 py-1.5 text-sm" />
+      <label className="text-xs font-medium text-muted-foreground">
+        <span className="mb-1 block">Nama</span>
+        <input
+          name="name"
+          required
+          className="block w-40 rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+        />
       </label>
-      <label className="text-sm text-slate-600">
-        Email
+      <label className="text-xs font-medium text-muted-foreground">
+        <span className="mb-1 block">Email</span>
         <input
           type="email"
           name="email"
           required
-          className="mt-1 block w-56 rounded-md border border-border px-2 py-1.5 text-sm"
+          className="block w-56 rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
         />
       </label>
-      <label className="text-sm text-slate-600">
-        Password
+      <label className="text-xs font-medium text-muted-foreground">
+        <span className="mb-1 block">Password</span>
         <input
           type="password"
           name="password"
           required
           minLength={8}
-          className="mt-1 block w-40 rounded-md border border-border px-2 py-1.5 text-sm"
+          className="block w-40 rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
         />
       </label>
-      <label className="text-sm text-slate-600">
-        Role
-        <select name="role" required className="mt-1 block rounded-md border border-border px-2 py-1.5 text-sm">
+      <label className="text-xs font-medium text-muted-foreground">
+        <span className="mb-1 block">Role</span>
+        <select
+          name="role"
+          required
+          className="block rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+        >
           <option value="leader">Leader</option>
           <option value="section_head">Section Head</option>
           <option value="admin">Admin</option>
@@ -47,12 +55,12 @@ export function CreateUserForm() {
       <button
         type="submit"
         disabled={pending}
-        className="cursor-pointer rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+        className="cursor-pointer rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-transform duration-[var(--dur-fast)] hover:brightness-110 active:scale-95 disabled:opacity-50"
       >
         {pending ? "Membuat..." : "Buat Akun"}
       </button>
       {state.error && (
-        <p role="alert" className="w-full text-sm text-destructive">
+        <p role="alert" className="anim-fade w-full text-sm text-destructive">
           {state.error}
         </p>
       )}

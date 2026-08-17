@@ -1,0 +1,7 @@
+fastapi>=0.115
+uvicorn[standard]>=0.30
+deepface>=0.0.93
+tf-keras>=2.15
+opencv-python>=4.10,<5
+pillow>=10.4
+numpy>=1.26

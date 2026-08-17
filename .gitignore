@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# kiosk-backend (Python)
+kiosk-backend/.venv
+kiosk-backend/__pycache__
+kiosk-backend/*.pyc

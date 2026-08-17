@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { authClient } from "@/lib/authClient";
 import type { Role } from "@/lib/auth";
+import { IconLayoutDashboard, IconSettings, IconLogOut } from "@/components/icons";
 
 const ROLE_LABEL: Record<Role, string> = {
   admin: "Admin",
@@ -16,8 +17,8 @@ export function AppNav({ name, role }: { name: string; role: Role }) {
   const router = useRouter();
 
   const links = [
-    { href: "/dashboard", label: "Dashboard", show: true },
-    { href: "/admin", label: "Admin", show: role === "admin" },
+    { href: "/dashboard", label: "Dashboard", icon: IconLayoutDashboard, show: true },
+    { href: "/admin", label: "Admin", icon: IconSettings, show: role === "admin" },
   ].filter((l) => l.show);
 
   async function handleLogout() {
@@ -28,21 +29,30 @@ export function AppNav({ name, role }: { name: string; role: Role }) {
   }
 
   return (
-    <header className="border-b border-border bg-surface">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
-        <div className="flex items-center gap-6">
-          <span className="font-semibold text-foreground">e-Mood</span>
+    <header className="sticky top-0 z-20 border-b border-border/80 bg-surface/85 backdrop-blur-md">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
+        <div className="flex items-center gap-8">
+          <Link href="/dashboard" className="flex items-center gap-2.5">
+            <span className="relative flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-secondary text-xs font-bold text-primary-foreground shadow-[0_0_20px_-4px_var(--primary)]">
+              e
+            </span>
+            <span className="text-[15px] font-semibold tracking-tight text-foreground">e-Mood</span>
+          </Link>
           <nav className="flex gap-1">
             {links.map((l) => {
               const active = pathname === l.href || pathname.startsWith(l.href + "/");
+              const Icon = l.icon;
               return (
                 <Link
                   key={l.href}
                   href={l.href}
-                  className={`cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                    active ? "bg-primary text-primary-foreground" : "text-slate-600 hover:bg-muted"
+                  className={`group flex cursor-pointer items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-[var(--dur-base)] ${
+                    active
+                      ? "bg-primary/15 text-primary"
+                      : "text-muted-foreground hover:bg-surface-2 hover:text-foreground"
                   }`}
                 >
+                  <Icon className={`h-4 w-4 transition-transform duration-[var(--dur-base)] ${active ? "" : "group-hover:scale-110"}`} />
                   {l.label}
                 </Link>
               );
@@ -50,14 +60,16 @@ export function AppNav({ name, role }: { name: string; role: Role }) {
           </nav>
         </div>
         <div className="flex items-center gap-3 text-sm">
-          <span className="text-slate-600">
-            {name} <span className="text-slate-400">· {ROLE_LABEL[role]}</span>
-          </span>
+          <div className="hidden flex-col items-end leading-tight sm:flex">
+            <span className="font-medium text-foreground">{name}</span>
+            <span className="text-xs text-muted-foreground">{ROLE_LABEL[role]}</span>
+          </div>
           <button
             type="button"
             onClick={handleLogout}
-            className="cursor-pointer rounded-md border border-border px-3 py-1.5 font-medium text-slate-600 transition-colors hover:bg-muted"
+            className="flex cursor-pointer items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors duration-[var(--dur-fast)] hover:border-destructive/40 hover:text-destructive"
           >
+            <IconLogOut className="h-3.5 w-3.5" />
             Keluar
           </button>
         </div>

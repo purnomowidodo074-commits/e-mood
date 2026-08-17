@@ -1,35 +1,54 @@
 @import "tailwindcss";
 
+/*
+  e-Mood — dark, full-palette industrial system (Casting Division: molten metal,
+  ladle, furnace — the palette leans into that register rather than away from it).
+  Chosen deliberately over the earlier light theme: dark everywhere, including
+  the kiosk, trading the safety of "predictable factory-kiosk light UI" for a
+  bolder, higher-contrast dark surface (still ≥4.5:1 on body text).
+*/
 :root {
-  /* Design system: Data-Dense Dashboard (light only — factory-floor monitors, high contrast) */
-  --background: #f8fafc;
-  --foreground: #1e3a8a;
-  --surface: #ffffff;
-  --muted: #e9eef6;
-  --border: #dbeafe;
-  --primary: #1e40af;
-  --primary-foreground: #ffffff;
-  --accent: #d97706;
-  --destructive: #dc2626;
+  --background: #090c12;
+  --surface: #121826;
+  --surface-2: #1a2233;
+  --border: #262f45;
+  --foreground: #eef2ff;
+  --muted-foreground: #8993ab;
 
-  /* Mood categories: clearly distinct, none read as an alarm color */
-  --happy: #059669;
-  --happy-bg: #ecfdf5;
-  --netral: #d97706;
-  --netral-bg: #fffbeb;
-  --badmood: #ea580c;
-  --badmood-bg: #fff7ed;
+  --primary: #5b8def;
+  --primary-foreground: #04070d;
+  --secondary: #a78bfa;
+  --accent: #fbbf24;
+  --accent-foreground: #24160a;
+  --destructive: #f87171;
+
+  /* Mood categories: distinct hues, none reads as a verdict */
+  --happy: #34d399;
+  --happy-bg: rgba(52, 211, 153, 0.14);
+  --netral: #fbbf24;
+  --netral-bg: rgba(251, 191, 36, 0.14);
+  --badmood: #fb923c;
+  --badmood-bg: rgba(251, 146, 60, 0.14);
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 150ms;
+  --dur-base: 220ms;
+  --dur-slow: 380ms;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
-  --color-muted: var(--muted);
+  --color-surface-2: var(--surface-2);
+  --color-muted: var(--surface-2);
+  --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
   --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-happy: var(--happy);
   --color-happy-bg: var(--happy-bg);
@@ -45,4 +64,85 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  letter-spacing: -0.011em;
+}
+
+* {
+  border-color: var(--border);
+}
+
+::selection {
+  background: color-mix(in srgb, var(--primary) 35%, transparent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .anim-fade-up {
+    animation: fadeUp var(--dur-slow) var(--ease-out-expo) both;
+  }
+  .anim-fade {
+    animation: fadeIn var(--dur-base) var(--ease-out-expo) both;
+  }
+  .anim-scale-in {
+    animation: scaleIn var(--dur-base) var(--ease-out-expo) both;
+  }
+  .anim-stagger > * {
+    animation: fadeUp var(--dur-slow) var(--ease-out-expo) both;
+  }
+  .anim-stagger > *:nth-child(1) { animation-delay: 0ms; }
+  .anim-stagger > *:nth-child(2) { animation-delay: 40ms; }
+  .anim-stagger > *:nth-child(3) { animation-delay: 80ms; }
+  .anim-stagger > *:nth-child(4) { animation-delay: 120ms; }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes ringPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 45%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 14px color-mix(in srgb, var(--primary) 0%, transparent);
+  }
+}
+
+@keyframes progressFill {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.anim-progress {
+  animation: progressFill 3s linear both;
 }

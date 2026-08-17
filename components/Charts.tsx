@@ -3,7 +3,7 @@
 
 type Segment = { label: string; value: number; color: string };
 
-export function DonutChart({ segments, size = 160 }: { segments: Segment[]; size?: number }) {
+export function DonutChart({ segments, size = 168 }: { segments: Segment[]; size?: number }) {
   const total = segments.reduce((s, x) => s + x.value, 0);
   let cursor = 0;
   const stops: string[] = [];
@@ -12,28 +12,34 @@ export function DonutChart({ segments, size = 160 }: { segments: Segment[]; size
     stops.push(`${seg.color} ${cursor}% ${cursor + pct}%`);
     cursor += pct;
   }
-  const gradient = total > 0 ? `conic-gradient(${stops.join(", ")})` : "#e9eef6";
+  const gradient = total > 0 ? `conic-gradient(from -90deg, ${stops.join(", ")})` : "var(--surface-2)";
 
   return (
-    <div className="flex items-center gap-5">
+    <div className="flex flex-wrap items-center gap-7">
       <div
         role="img"
         aria-label={segments.map((s) => `${s.label}: ${s.value}`).join(", ")}
-        className="relative shrink-0 rounded-full"
+        className="anim-scale-in relative shrink-0 rounded-full p-[3px]"
         style={{ width: size, height: size, background: gradient }}
       >
-        <div className="absolute inset-[18%] flex items-center justify-center rounded-full bg-surface">
-          <span className="text-lg font-semibold text-foreground">{total}</span>
+        <div className="flex h-full w-full items-center justify-center rounded-full bg-surface">
+          <div className="flex flex-col items-center">
+            <span className="font-mono text-3xl font-semibold tabular-nums text-foreground">{total}</span>
+            <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">absen</span>
+          </div>
         </div>
       </div>
-      <ul className="flex flex-col gap-1.5 text-sm">
+      <ul className="anim-stagger flex flex-col gap-2.5 text-sm">
         {segments.map((s) => (
-          <li key={s.label} className="flex items-center gap-2">
-            <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: s.color }} />
-            <span className="text-slate-600">{s.label}</span>
-            <span className="font-mono font-medium text-foreground">{s.value}</span>
-            <span className="text-slate-400">
-              ({total > 0 ? Math.round((s.value / total) * 100) : 0}%)
+          <li key={s.label} className="flex items-center gap-2.5">
+            <span
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ background: s.color, boxShadow: `0 0 10px -1px ${s.color}` }}
+            />
+            <span className="w-16 text-muted-foreground">{s.label}</span>
+            <span className="font-mono font-semibold tabular-nums text-foreground">{s.value}</span>
+            <span className="font-mono text-xs tabular-nums text-muted-foreground">
+              {total > 0 ? Math.round((s.value / total) * 100) : 0}%
             </span>
           </li>
         ))}
@@ -47,25 +53,26 @@ type BarGroup = { label: string; values: { label: string; value: number; color: 
 export function BarChart({ groups }: { groups: BarGroup[] }) {
   const max = Math.max(1, ...groups.flatMap((g) => g.values.map((v) => v.value)));
   return (
-    <div className="flex items-end gap-8">
+    <div className="anim-stagger flex items-end gap-9">
       {groups.map((g) => (
-        <div key={g.label} className="flex flex-col items-center gap-2">
-          <div className="flex h-36 items-end gap-1.5">
+        <div key={g.label} className="flex flex-col items-center gap-3">
+          <div className="flex h-40 items-end gap-2">
             {g.values.map((v) => (
-              <div key={v.label} className="flex w-7 flex-col items-center justify-end">
-                <span className="mb-1 font-mono text-xs text-slate-500">{v.value || ""}</span>
+              <div key={v.label} className="flex w-8 flex-col items-center justify-end">
+                <span className="mb-1.5 font-mono text-xs tabular-nums text-muted-foreground">{v.value || ""}</span>
                 <div
                   title={`${v.label}: ${v.value}`}
-                  className="w-full rounded-t-sm"
+                  className="w-full rounded-t-md transition-[height] duration-500 ease-[var(--ease-out-expo)]"
                   style={{
                     height: `${Math.max((v.value / max) * 100, v.value > 0 ? 3 : 0)}%`,
-                    background: v.color,
+                    background: `linear-gradient(180deg, ${v.color}, ${v.color}99)`,
+                    boxShadow: `0 0 16px -6px ${v.color}`,
                   }}
                 />
               </div>
             ))}
           </div>
-          <span className="text-xs font-medium text-slate-500">Shift {g.label}</span>
+          <span className="text-xs font-medium text-muted-foreground">Shift {g.label}</span>
         </div>
       ))}
     </div>
@@ -77,7 +84,7 @@ type Series = { label: string; color: string; points: number[] };
 export function LineChart({
   labels,
   series,
-  height = 180,
+  height = 200,
 }: {
   labels: string[];
   series: Series[];
@@ -87,30 +94,51 @@ export function LineChart({
   const max = Math.max(1, ...series.flatMap((s) => s.points));
   const stepX = labels.length > 1 ? width / (labels.length - 1) : 0;
 
-  function toPath(points: number[]) {
-    return points
-      .map((v, i) => `${i === 0 ? "M" : "L"} ${i * stepX} ${height - (v / max) * height}`)
-      .join(" ");
+  function toPoints(points: number[]) {
+    return points.map((v, i) => [i * stepX, height - (v / max) * height] as const);
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex gap-4 text-sm">
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap gap-4 text-sm">
         {series.map((s) => (
-          <span key={s.label} className="flex items-center gap-1.5 text-slate-600">
-            <span className="h-2.5 w-2.5 rounded-full" style={{ background: s.color }} />
+          <span key={s.label} className="flex items-center gap-1.5 text-muted-foreground">
+            <span className="h-2.5 w-2.5 rounded-full" style={{ background: s.color, boxShadow: `0 0 8px -1px ${s.color}` }} />
             {s.label}
           </span>
         ))}
       </div>
-      <div className="overflow-x-auto">
-        <svg width={width} height={height + 20} className="min-w-full">
-          <line x1={0} y1={height} x2={width} y2={height} stroke="#e2e8f0" strokeWidth={1} />
-          {series.map((s) => (
-            <path key={s.label} d={toPath(s.points)} fill="none" stroke={s.color} strokeWidth={2} />
+      <div className="anim-fade overflow-x-auto">
+        <svg width={width} height={height + 24} className="min-w-full">
+          <defs>
+            {series.map((s) => (
+              <linearGradient key={s.label} id={`area-${s.label}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={s.color} stopOpacity={0.28} />
+                <stop offset="100%" stopColor={s.color} stopOpacity={0} />
+              </linearGradient>
+            ))}
+          </defs>
+          {[0.25, 0.5, 0.75, 1].map((f) => (
+            <line key={f} x1={0} y1={height * f} x2={width} y2={height * f} stroke="var(--border)" strokeWidth={1} />
           ))}
+          {series.map((s) => {
+            const pts = toPoints(s.points);
+            const line = pts.map(([x, y], i) => `${i === 0 ? "M" : "L"} ${x} ${y}`).join(" ");
+            const area = `${line} L ${width} ${height} L 0 ${height} Z`;
+            return (
+              <g key={s.label}>
+                <path d={area} fill={`url(#area-${s.label})`} stroke="none" />
+                <path d={line} fill="none" stroke={s.color} strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round" />
+                {pts.map(([x, y], i) => (
+                  <circle key={i} cx={x} cy={y} r={3} fill="var(--surface)" stroke={s.color} strokeWidth={2}>
+                    <title>{`${labels[i]} · ${s.label}: ${s.points[i]}`}</title>
+                  </circle>
+                ))}
+              </g>
+            );
+          })}
           {labels.map((l, i) => (
-            <text key={l} x={i * stepX} y={height + 14} fontSize={10} textAnchor="middle" fill="#64748b">
+            <text key={l} x={i * stepX} y={height + 18} fontSize={10} textAnchor="middle" fill="var(--muted-foreground)">
               {l}
             </text>
           ))}

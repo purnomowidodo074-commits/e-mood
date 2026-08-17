@@ -12,9 +12,11 @@ import { todayISO, isoDaysAgo, formatDateID, formatTimeID, formatDayLabel } from
 import { CATEGORY_COLOR, CATEGORY_BG, CATEGORY_LABEL } from "@/lib/colors";
 import { DonutChart, BarChart, LineChart } from "@/components/Charts";
 import { followUpAction } from "@/lib/actions";
+import { IconFaceHappy, IconFaceNeutral, IconFaceSad, IconUsers } from "@/components/icons";
 
 const CATEGORIES: Category[] = ["HAPPY", "NETRAL", "BADMOOD"];
 const SHIFTS = ["1", "2", "3"];
+const CATEGORY_ICON = { HAPPY: IconFaceHappy, NETRAL: IconFaceNeutral, BADMOOD: IconFaceSad };
 
 export default async function DashboardPage(props: PageProps<"/dashboard">) {
   const user = await requireUser();
@@ -45,84 +47,60 @@ async function LeaderView({ searchParams }: { searchParams: Record<string, strin
     value: summary[c.toLowerCase() as "happy" | "netral" | "badmood"],
     color: CATEGORY_COLOR[c],
   }));
+  const pct = summary.totalActiveMembers > 0 ? Math.round((summary.total / summary.totalActiveMembers) * 100) : 0;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="anim-stagger flex flex-col gap-7">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-lg font-semibold text-foreground">Dashboard</h1>
-          <p className="text-sm text-slate-500">{formatDateID(date)}</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Dashboard</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{formatDateID(date)}</p>
         </div>
-        <form className="flex items-end gap-3" method="get">
-          <label className="text-sm text-slate-600">
-            Tanggal
-            <input
-              type="date"
-              name="date"
-              defaultValue={date}
-              className="mt-1 block rounded-md border border-border bg-white px-2 py-1.5 text-sm"
-            />
-          </label>
-          <label className="text-sm text-slate-600">
-            Shift
-            <select
-              name="shift"
-              defaultValue={shift ?? ""}
-              className="mt-1 block rounded-md border border-border bg-white px-2 py-1.5 text-sm"
-            >
-              <option value="">Semua</option>
-              {SHIFTS.map((s) => (
-                <option key={s} value={s}>
-                  Shift {s}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button
-            type="submit"
-            className="cursor-pointer rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            Terapkan
-          </button>
-        </form>
+        <FilterForm date={date} shift={shift} />
       </header>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <SummaryCard label="Sudah Absen" value={`${summary.total} / ${summary.totalActiveMembers}`} />
-        {CATEGORIES.map((c) => (
-          <SummaryCard
-            key={c}
-            label={CATEGORY_LABEL[c]}
-            value={summary[c.toLowerCase() as "happy" | "netral" | "badmood"]}
-            color={CATEGORY_COLOR[c]}
-            bg={CATEGORY_BG[c]}
-          />
-        ))}
-      </div>
-
-      <section className="rounded-lg border border-border bg-surface p-5">
-        <h2 className="mb-4 text-sm font-semibold text-foreground">Distribusi Mood</h2>
-        <DonutChart segments={segments} />
+      <section className="grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-border bg-border lg:grid-cols-[minmax(0,1fr)_1.4fr]">
+        <div className="flex flex-col justify-center gap-3 bg-surface p-6">
+          <div className="flex items-baseline gap-2">
+            <span className="font-mono text-5xl font-semibold tabular-nums text-foreground">{summary.total}</span>
+            <span className="font-mono text-xl text-muted-foreground">/ {summary.totalActiveMembers}</span>
+          </div>
+          <p className="text-sm font-medium text-muted-foreground">member sudah absen hari ini</p>
+          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-primary to-secondary transition-[width] duration-700 ease-[var(--ease-out-expo)]"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+          <span className="font-mono text-xs text-muted-foreground">{pct}%</span>
+        </div>
+        <div className="bg-surface p-6">
+          <DonutChart segments={segments} />
+        </div>
       </section>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <section className="rounded-lg border border-border bg-surface p-5 lg:col-span-2">
+        <section className="anim-fade-up rounded-2xl border border-border bg-surface p-6 lg:col-span-2">
           <h2 className="mb-4 text-sm font-semibold text-foreground">Detail Absen ({records.length})</h2>
           <RecordsTable records={records} />
         </section>
 
-        <section className="rounded-lg border border-border bg-surface p-5">
-          <h2 className="mb-4 text-sm font-semibold text-foreground">
+        <section className="anim-fade-up rounded-2xl border border-border bg-surface p-6">
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
+            <IconUsers className="h-4 w-4 text-muted-foreground" />
             Belum Absen ({unrecorded.length})
           </h2>
           {unrecorded.length === 0 ? (
-            <p className="text-sm text-slate-500">Semua member aktif sudah absen.</p>
+            <p className="text-sm text-muted-foreground">Semua member aktif sudah absen.</p>
           ) : (
-            <ul className="max-h-96 space-y-1 overflow-y-auto text-sm">
+            <ul className="max-h-96 space-y-0.5 overflow-y-auto text-sm">
               {unrecorded.map((m) => (
-                <li key={m.noreg} className="flex justify-between border-b border-border/60 py-1">
-                  <span className="text-slate-700">{m.nama}</span>
-                  <span className="font-mono text-slate-400">{m.noreg}</span>
+                <li
+                  key={m.noreg}
+                  className="flex justify-between rounded-lg px-2 py-1.5 transition-colors duration-[var(--dur-fast)] hover:bg-surface-2"
+                >
+                  <span className="text-foreground/90">{m.nama}</span>
+                  <span className="font-mono text-muted-foreground">{m.noreg}</span>
                 </li>
               ))}
             </ul>
@@ -133,51 +111,96 @@ async function LeaderView({ searchParams }: { searchParams: Record<string, strin
   );
 }
 
+function FilterForm({ date, shift }: { date: string; shift?: string }) {
+  return (
+    <form className="flex flex-wrap items-end gap-2.5" method="get">
+      <label className="text-xs font-medium text-muted-foreground">
+        <span className="mb-1 block">Tanggal</span>
+        <input
+          type="date"
+          name="date"
+          defaultValue={date}
+          className="block rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-primary"
+        />
+      </label>
+      <label className="text-xs font-medium text-muted-foreground">
+        <span className="mb-1 block">Shift</span>
+        <select
+          name="shift"
+          defaultValue={shift ?? ""}
+          className="block rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-primary"
+        >
+          <option value="">Semua</option>
+          {SHIFTS.map((s) => (
+            <option key={s} value={s}>
+              Shift {s}
+            </option>
+          ))}
+        </select>
+      </label>
+      <button
+        type="submit"
+        className="cursor-pointer rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-transform duration-[var(--dur-fast)] hover:brightness-110 active:scale-95"
+      >
+        Terapkan
+      </button>
+    </form>
+  );
+}
+
 function RecordsTable({ records }: { records: MoodRecordRow[] }) {
   if (records.length === 0) {
-    return <p className="text-sm text-slate-500">Belum ada data absen untuk filter ini.</p>;
+    return <p className="text-sm text-muted-foreground">Belum ada data absen untuk filter ini.</p>;
   }
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-slate-400">
-            <th className="py-2 pr-3">Nama</th>
-            <th className="py-2 pr-3">Noreg</th>
-            <th className="py-2 pr-3">Jam</th>
-            <th className="py-2 pr-3">Kategori</th>
-            <th className="py-2 pr-3">Confidence</th>
-            <th className="py-2 pr-3">Sumber</th>
-            <th className="py-2 pr-3">Follow-up</th>
+          <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
+            <th className="py-2 pr-3 font-medium">Nama</th>
+            <th className="py-2 pr-3 font-medium">Noreg</th>
+            <th className="py-2 pr-3 font-medium">Jam</th>
+            <th className="py-2 pr-3 font-medium">Kategori</th>
+            <th className="py-2 pr-3 font-medium">Confidence</th>
+            <th className="py-2 pr-3 font-medium">Sumber</th>
+            <th className="py-2 pr-3 font-medium">Follow-up</th>
           </tr>
         </thead>
         <tbody>
-          {records.map((r) => (
-            <tr key={r.id} className="border-b border-border/60 align-top">
-              <td className="py-2 pr-3 text-slate-800">{r.nama}</td>
-              <td className="py-2 pr-3 font-mono text-slate-500">{r.noreg}</td>
-              <td className="py-2 pr-3 font-mono text-slate-500">{formatTimeID(r.recorded_at)}</td>
-              <td className="py-2 pr-3">
-                <span
-                  className="rounded-full px-2 py-0.5 text-xs font-medium"
-                  style={{ background: CATEGORY_BG[r.category], color: CATEGORY_COLOR[r.category] }}
-                >
-                  {CATEGORY_LABEL[r.category]}
-                </span>
-              </td>
-              <td className="py-2 pr-3 font-mono text-slate-500">
-                {r.confidence}%{r.low_confidence && <span className="ml-1 text-accent">kurang yakin</span>}
-              </td>
-              <td className="py-2 pr-3 text-slate-500">{r.source === "auto" ? "Otomatis" : "Manual"}</td>
-              <td className="py-2 pr-3">
-                {r.category === "BADMOOD" ? (
-                  <FollowUpForm record={r} />
-                ) : (
-                  <span className="text-slate-300">—</span>
-                )}
-              </td>
-            </tr>
-          ))}
+          {records.map((r) => {
+            const CatIcon = CATEGORY_ICON[r.category];
+            return (
+              <tr
+                key={r.id}
+                className="border-b border-border/60 align-top transition-colors duration-[var(--dur-fast)] hover:bg-surface-2/60"
+              >
+                <td className="py-2.5 pr-3 text-foreground/90">{r.nama}</td>
+                <td className="py-2.5 pr-3 font-mono text-muted-foreground">{r.noreg}</td>
+                <td className="py-2.5 pr-3 font-mono text-muted-foreground">{formatTimeID(r.recorded_at)}</td>
+                <td className="py-2.5 pr-3">
+                  <span
+                    className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
+                    style={{ background: CATEGORY_BG[r.category], color: CATEGORY_COLOR[r.category] }}
+                  >
+                    <CatIcon className="h-3.5 w-3.5" />
+                    {CATEGORY_LABEL[r.category]}
+                  </span>
+                </td>
+                <td className="py-2.5 pr-3 font-mono text-muted-foreground">
+                  {r.confidence}%
+                  {r.low_confidence && <span className="ml-1.5 text-accent">kurang yakin</span>}
+                </td>
+                <td className="py-2.5 pr-3 text-muted-foreground">{r.source === "auto" ? "Otomatis" : "Manual"}</td>
+                <td className="py-2.5 pr-3">
+                  {r.category === "BADMOOD" ? (
+                    <FollowUpForm record={r} />
+                  ) : (
+                    <span className="text-muted-foreground/40">—</span>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
@@ -188,8 +211,8 @@ function FollowUpForm({ record }: { record: MoodRecordRow }) {
   return (
     <form action={followUpAction} className="flex min-w-48 flex-col gap-1.5">
       <input type="hidden" name="recordId" value={record.id} />
-      <label className="flex items-center gap-1.5 text-xs text-slate-600">
-        <input type="checkbox" name="followed_up" defaultChecked={record.followed_up} />
+      <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <input type="checkbox" name="followed_up" defaultChecked={record.followed_up} className="accent-primary" />
         Sudah ditindaklanjuti
       </label>
       <textarea
@@ -197,39 +220,15 @@ function FollowUpForm({ record }: { record: MoodRecordRow }) {
         defaultValue={record.followup_note ?? ""}
         placeholder="Catatan..."
         rows={2}
-        className="w-full rounded-md border border-border px-2 py-1 text-xs"
+        className="w-full rounded-lg border border-border bg-surface-2 px-2.5 py-1.5 text-xs text-foreground outline-none transition-colors focus:border-primary"
       />
       <button
         type="submit"
-        className="cursor-pointer self-start rounded-md border border-border px-2 py-1 text-xs font-medium text-slate-600 hover:bg-muted"
+        className="cursor-pointer self-start rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors duration-[var(--dur-fast)] hover:border-primary/40 hover:text-primary"
       >
         Simpan
       </button>
     </form>
-  );
-}
-
-function SummaryCard({
-  label,
-  value,
-  color,
-  bg,
-}: {
-  label: string;
-  value: string | number;
-  color?: string;
-  bg?: string;
-}) {
-  return (
-    <div
-      className="rounded-lg border border-border p-4"
-      style={{ background: bg ?? "var(--surface)" }}
-    >
-      <p className="text-xs font-medium text-slate-500">{label}</p>
-      <p className="mt-1 font-mono text-2xl font-semibold" style={{ color: color ?? "var(--foreground)" }}>
-        {value}
-      </p>
-    </div>
   );
 }
 
@@ -273,22 +272,24 @@ async function SectionHeadView({
     })),
   }));
 
+  const totalInRange = trend.reduce((s, r) => s + r.count, 0);
+
   return (
-    <div className="flex flex-col gap-6">
+    <div className="anim-stagger flex flex-col gap-7">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-lg font-semibold text-foreground">Dashboard — Tren Agregat</h1>
-          <p className="text-sm text-slate-500">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Tren Agregat</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {formatDateID(startDate)} – {formatDateID(endDate)}
           </p>
         </div>
-        <form className="flex items-end gap-3" method="get">
-          <label className="text-sm text-slate-600">
-            Rentang
+        <form className="flex items-end gap-2.5" method="get">
+          <label className="text-xs font-medium text-muted-foreground">
+            <span className="mb-1 block">Rentang</span>
             <select
               name="range"
               defaultValue={range}
-              className="mt-1 block rounded-md border border-border bg-white px-2 py-1.5 text-sm"
+              className="block rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-primary"
             >
               <option value="week">7 hari terakhir</option>
               <option value="month">30 hari terakhir</option>
@@ -296,19 +297,24 @@ async function SectionHeadView({
           </label>
           <button
             type="submit"
-            className="cursor-pointer rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            className="cursor-pointer rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-transform duration-[var(--dur-fast)] hover:brightness-110 active:scale-95"
           >
             Terapkan
           </button>
         </form>
       </header>
 
-      <section className="rounded-lg border border-border bg-surface p-5">
+      <p className="anim-fade-up text-sm text-muted-foreground">
+        <span className="font-mono font-semibold text-foreground">{totalInRange}</span> absen tercatat sepanjang
+        periode ini, seluruhnya agregat — tanpa nama individu.
+      </p>
+
+      <section className="anim-fade-up rounded-2xl border border-border bg-surface p-6">
         <h2 className="mb-4 text-sm font-semibold text-foreground">Tren Harian per Kategori</h2>
         <LineChart labels={dayList.map(formatDayLabel)} series={trendSeries} />
       </section>
 
-      <section className="rounded-lg border border-border bg-surface p-5">
+      <section className="anim-fade-up rounded-2xl border border-border bg-surface p-6">
         <h2 className="mb-4 text-sm font-semibold text-foreground">Perbandingan Antar Shift</h2>
         <BarChart groups={shiftGroups} />
       </section>

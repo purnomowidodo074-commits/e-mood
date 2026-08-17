@@ -9,6 +9,8 @@ create extension if not exists pgcrypto;
 
 create table members (
   id            uuid primary key default gen_random_uuid(),
+  -- selalu 7 digit, ditambal 0 di depan bila data sumber (Excel) lebih pendek —
+  -- lihat normalizeNoreg() di lib/queries.ts, satu-satunya tempat noreg ditulis
   noreg         text unique not null,
   nama          text not null,
   is_active     boolean not null default true,
@@ -37,8 +39,9 @@ create table mood_records (
 );
 
 -- satu member cuma bisa absen sekali per shift per hari (FR-1.5)
+-- pakai tanggal WIB (bukan recorded_at::date, yang ikut timezone sesi DB / GMT di Neon)
 create unique index mood_records_one_per_shift_per_day
-  on mood_records (member_id, shift, (recorded_at::date));
+  on mood_records (member_id, shift, ((recorded_at at time zone 'Asia/Jakarta')::date));
 
 create index mood_records_recorded_at_idx on mood_records (recorded_at);
 create index mood_records_category_idx on mood_records (category);
