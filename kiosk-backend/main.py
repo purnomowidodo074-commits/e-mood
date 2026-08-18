@@ -46,10 +46,14 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(title="e-Mood Kiosk Backend", lifespan=lifespan)
 
-# Kiosk frontend runs on the same machine (Next.js dev/prod on some localhost port).
+# This service only ever listens on localhost, reachable solely from the kiosk PC
+# itself — so any page can call it (allow_origins=["*"]), including the Next.js
+# app once it's deployed to a public URL (mixed HTTPS-page -> http://localhost is
+# allowed by browsers; localhost is exempt from mixed-content blocking). No
+# allow_credentials, so this stays safe even wide open.
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"http://localhost:\d+",
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )

@@ -1,8 +1,14 @@
 # e-Mood Kiosk Backend
 
-Layanan lokal (Python + FastAPI + DeepFace) yang menganalisa ekspresi wajah dari
-kamera. Jalan **hanya di laptop/PC kiosk itu sendiri** — tidak pernah mengirim
-gambar wajah ke internet atau ke Neon (lihat `main.py` untuk detail privasi).
+Layanan (Python + FastAPI + DeepFace) yang menganalisa ekspresi wajah dari kamera.
+
+> ⚠️ **Keputusan arsitektur PRD (D-3 / NFR-3.3) aslinya mewajibkan ini jalan
+> lokal di PC kiosk — frame wajah tidak boleh keluar perangkat.** Repo ini juga
+> mendukung deploy ke cloud (lihat bagian "Deploy ke cloud" di bawah) atas
+> permintaan eksplisit, tapi itu berarti frame wajah **dikirim lewat internet**
+> ke server, dan secara sadar melanggar D-3/NFR-3.3. Sebelum dipakai untuk
+> member sungguhan (bukan testing), ini butuh **persetujuan ulang HR/Safety**
+> (NFR-3.8) dan tinjauan kepatuhan UU PDP (R6) — bukan cuma keputusan teknis.
 
 ## Setup (Windows, PowerShell)
 
@@ -43,6 +49,38 @@ Perlu dua proses jalan bersamaan di laptop yang sama:
 
 Kalau backend jalan di port lain, set `NEXT_PUBLIC_KIOSK_ANALYZE_URL` di
 `.env.local` root project (mis. `http://localhost:8000/analyze`).
+
+## Deploy ke cloud
+
+`Dockerfile` di folder ini sudah siap dipakai di host mana pun yang menerima
+Docker (Railway, Render, Fly.io, dst.). Rekomendasi: **Railway** atau
+**Render** — keduanya jalankan container sebagai proses persisten (bukan
+serverless function), penting karena model DeepFace di-warm-load sekali saat
+start (NFR-1.3); kalau host-nya serverless/cold-start tiap request, tiap
+request kena penalti load model 5–10 detik.
+
+Perhatikan ukuran resource: TensorFlow + DeepFace butuh RAM lebih dari tier
+gratis termurah kebanyakan platform (biasanya 512 MB) — kalau container
+langsung mati/restart terus, itu tandanya kena OOM, naikkan tier RAM-nya
+(1–2 GB biasanya cukup).
+
+**Langkah umum (Railway, via GitHub):**
+
+1. Push repo ini ke GitHub (sudah dilakukan).
+2. Di Railway: New Project → Deploy from GitHub repo → pilih repo, set
+   **Root Directory** ke `kiosk-backend` (Railway otomatis pakai `Dockerfile`
+   di situ).
+3. Setelah deploy sukses, Railway kasih URL publik HTTPS, mis.
+   `https://xxxxx.up.railway.app`.
+4. Set `NEXT_PUBLIC_KIOSK_ANALYZE_URL=https://xxxxx.up.railway.app/analyze`
+   di environment variable app Next.js (baik `.env.local` untuk dev, maupun
+   di platform hosting Next.js-nya untuk production), lalu redeploy/restart
+   app Next.js supaya env var baru terbaca (`NEXT_PUBLIC_*` di-bake saat
+   build, bukan dibaca ulang saat runtime).
+5. Cek `https://xxxxx.up.railway.app/health` → harus `{"ok":true}`.
+
+Render/Fly.io caranya mirip: sama-sama connect ke repo GitHub, arahkan ke
+`kiosk-backend/Dockerfile`, lalu pakai URL publik yang diberikan.
 
 ## Catatan
 
