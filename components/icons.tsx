@@ -29,6 +29,34 @@ export function IconLock(props: IconProps) {
   );
 }
 
+export function IconScanFrame(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8" />
+      <path d="M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8" />
+      <path d="M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16" />
+      <path d="M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16" />
+      <path d="M4.5 12h15" strokeDasharray="1.5 3" />
+    </Svg>
+  );
+}
+
+export function IconKeypad(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="6" cy="6" r="1.2" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="6" r="1.2" fill="currentColor" stroke="none" />
+      <circle cx="18" cy="6" r="1.2" fill="currentColor" stroke="none" />
+      <circle cx="6" cy="12" r="1.2" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none" />
+      <circle cx="18" cy="12" r="1.2" fill="currentColor" stroke="none" />
+      <circle cx="6" cy="18" r="1.2" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="18" r="1.2" fill="currentColor" stroke="none" />
+      <circle cx="18" cy="18" r="1.2" fill="currentColor" stroke="none" />
+    </Svg>
+  );
+}
+
 export function IconArrowLeft(props: IconProps) {
   return (
     <Svg {...props}>

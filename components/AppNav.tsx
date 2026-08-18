@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { authClient } from "@/lib/authClient";
@@ -32,10 +33,9 @@ export function AppNav({ name, role }: { name: string; role: Role }) {
     <header className="sticky top-0 z-20 border-b border-border/80 bg-surface/85 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-8">
-          <Link href="/dashboard" className="flex items-center gap-2.5">
-            <span className="relative flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-secondary text-xs font-bold text-primary-foreground shadow-[0_0_20px_-4px_var(--primary)]">
-              e
-            </span>
+          <Link href="/dashboard" className="flex items-center gap-3">
+            <Image src="/logo.png" alt="Toyota" width={100} height={28} className="h-7 w-auto object-contain" priority />
+            <span className="h-5 w-px bg-border" />
             <span className="text-[15px] font-semibold tracking-tight text-foreground">e-Mood</span>
           </Link>
           <nav className="flex gap-1">

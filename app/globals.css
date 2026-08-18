@@ -134,6 +134,12 @@ body {
   }
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .anim-pulse-ring {
+    animation: ringPulse 1.8s ease-out infinite;
+  }
+}
+
 @keyframes progressFill {
   from {
     width: 0%;

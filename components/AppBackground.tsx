@@ -6,20 +6,23 @@ import { useGSAP } from "@gsap/react";
 
 gsap.registerPlugin(useGSAP);
 
-// Layered "3D-feeling" backdrop without WebGL: drifting gradient blobs, a
-// perspective floor grid, and a few floating glossy orbs (same glass-sphere
-// trick as the mood-result emoji badge). All CSS + GSAP — cheap on a kiosk
-// PC with no GPU (PRD 8.5), no network-loaded scene, no new render engine.
-export function KioskBackground() {
+// Layered "3D-feeling" backdrop without WebGL: a yellow-tinted photo base,
+// drifting gradient blobs, a perspective floor grid, and a few floating
+// glossy orbs (same glass-sphere trick as the mood-result emoji badge). All
+// CSS + GSAP — cheap on hardware with no GPU (PRD 8.5). Shared across the
+// whole app (kiosk, login, dashboard, admin) for one consistent look; each
+// instance scopes its own GSAP selectors via `scope`, so multiple mounts
+// never collide.
+export function AppBackground() {
   const scope = useRef<HTMLDivElement>(null);
 
   useGSAP(
     () => {
-      gsap.to(".kiosk-bg-blob-1", { x: 60, y: 40, duration: 22, repeat: -1, yoyo: true, ease: "sine.inOut" });
-      gsap.to(".kiosk-bg-blob-2", { x: -50, y: -30, duration: 26, repeat: -1, yoyo: true, ease: "sine.inOut" });
-      gsap.to(".kiosk-bg-blob-3", { x: 40, y: -50, duration: 30, repeat: -1, yoyo: true, ease: "sine.inOut" });
+      gsap.to(".app-bg-blob-1", { x: 60, y: 40, duration: 22, repeat: -1, yoyo: true, ease: "sine.inOut" });
+      gsap.to(".app-bg-blob-2", { x: -50, y: -30, duration: 26, repeat: -1, yoyo: true, ease: "sine.inOut" });
+      gsap.to(".app-bg-blob-3", { x: 40, y: -50, duration: 30, repeat: -1, yoyo: true, ease: "sine.inOut" });
 
-      gsap.utils.toArray<HTMLElement>(".kiosk-bg-orb").forEach((orb, i) => {
+      gsap.utils.toArray<HTMLElement>(".app-bg-orb").forEach((orb, i) => {
         gsap.to(orb, {
           y: -18,
           duration: 3 + i * 0.6,
@@ -48,15 +51,15 @@ export function KioskBackground() {
 
       {/* drifting gradient blobs */}
       <div
-        className="kiosk-bg-blob-1 absolute -top-40 left-[10%] h-96 w-96 rounded-full opacity-[0.18] blur-3xl"
+        className="app-bg-blob-1 absolute -top-40 left-[10%] h-96 w-96 rounded-full opacity-[0.18] blur-3xl"
         style={{ background: "radial-gradient(circle, var(--primary), transparent 70%)" }}
       />
       <div
-        className="kiosk-bg-blob-2 absolute top-1/3 right-[8%] h-80 w-80 rounded-full opacity-[0.14] blur-3xl"
+        className="app-bg-blob-2 absolute top-1/3 right-[8%] h-80 w-80 rounded-full opacity-[0.14] blur-3xl"
         style={{ background: "radial-gradient(circle, var(--secondary), transparent 70%)" }}
       />
       <div
-        className="kiosk-bg-blob-3 absolute bottom-[-6rem] left-1/3 h-72 w-72 rounded-full opacity-[0.12] blur-3xl"
+        className="app-bg-blob-3 absolute bottom-[-6rem] left-1/3 h-72 w-72 rounded-full opacity-[0.12] blur-3xl"
         style={{ background: "radial-gradient(circle, var(--accent), transparent 70%)" }}
       />
 
@@ -82,7 +85,7 @@ export function KioskBackground() {
       ].map((o, i) => (
         <span
           key={i}
-          className="kiosk-bg-orb absolute rounded-full"
+          className="app-bg-orb absolute rounded-full"
           style={{
             top: o.top,
             left: o.left,

@@ -1,5 +1,67 @@
-// Hand-rolled, dependency-free chart primitives (donut/bar/line).
+// Hand-rolled, dependency-free chart primitives (donut/bar/line/scatter).
 // skipped: charting library (Recharts) — these are simple enough not to need one.
+
+type ScatterPoint = { x: number; y: number; color: string; label: string };
+
+/** Jam absen (x, 0–24) × nilai confidence (y, 0–100), tiap titik diwarnai per kategori mood. */
+export function ScatterChart({
+  points,
+  xTicks = [0, 4, 8, 12, 16, 20, 24],
+  legend,
+}: {
+  points: ScatterPoint[];
+  xTicks?: number[];
+  legend: { label: string; color: string }[];
+}) {
+  const width = 640;
+  const height = 240;
+  const pad = { top: 10, right: 12, bottom: 26, left: 32 };
+  const plotW = width - pad.left - pad.right;
+  const plotH = height - pad.top - pad.bottom;
+  const yTicks = [0, 25, 50, 75, 100];
+
+  const sx = (x: number) => pad.left + (x / 24) * plotW;
+  const sy = (y: number) => pad.top + plotH - (y / 100) * plotH;
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap gap-4 text-sm">
+        {legend.map((l) => (
+          <span key={l.label} className="flex items-center gap-1.5 text-muted-foreground">
+            <span className="h-2.5 w-2.5 rounded-full" style={{ background: l.color, boxShadow: `0 0 8px -1px ${l.color}` }} />
+            {l.label}
+          </span>
+        ))}
+      </div>
+      <div className="anim-fade overflow-x-auto">
+        <svg viewBox={`0 0 ${width} ${height}`} className="w-full" style={{ minWidth: 320 }}>
+          {yTicks.map((v) => (
+            <g key={v}>
+              <line x1={pad.left} x2={width - pad.right} y1={sy(v)} y2={sy(v)} stroke="var(--border)" strokeWidth={1} />
+              <text x={pad.left - 6} y={sy(v) + 3} fontSize={9} textAnchor="end" fill="var(--muted-foreground)">
+                {v}
+              </text>
+            </g>
+          ))}
+          {xTicks.map((h) => (
+            <text key={h} x={sx(h)} y={height - 8} fontSize={9} textAnchor="middle" fill="var(--muted-foreground)">
+              {String(h).padStart(2, "0")}:00
+            </text>
+          ))}
+          {points.map((p, i) => (
+            <circle key={i} cx={sx(p.x)} cy={sy(p.y)} r={4.5} fill={p.color} fillOpacity={0.75} stroke={p.color} strokeWidth={1.25}>
+              <title>{p.label}</title>
+            </circle>
+          ))}
+        </svg>
+      </div>
+      <div className="flex justify-between text-xs text-muted-foreground">
+        <span>Jam absen</span>
+        <span>Confidence (%) ↑</span>
+      </div>
+    </div>
+  );
+}
 
 type Segment = { label: string; value: number; color: string };
 

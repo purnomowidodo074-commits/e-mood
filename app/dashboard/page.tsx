@@ -10,7 +10,7 @@ import {
 } from "@/lib/queries";
 import { todayISO, isoDaysAgo, formatDateID, formatTimeID, formatDayLabel } from "@/lib/date";
 import { CATEGORY_COLOR, CATEGORY_BG, CATEGORY_LABEL } from "@/lib/colors";
-import { DonutChart, BarChart, LineChart } from "@/components/Charts";
+import { DonutChart, BarChart, LineChart, ScatterChart } from "@/components/Charts";
 import { followUpAction } from "@/lib/actions";
 import { IconFaceHappy, IconFaceNeutral, IconFaceSad, IconUsers } from "@/components/icons";
 
@@ -48,6 +48,24 @@ async function LeaderView({ searchParams }: { searchParams: Record<string, strin
     color: CATEGORY_COLOR[c],
   }));
   const pct = summary.totalActiveMembers > 0 ? Math.round((summary.total / summary.totalActiveMembers) * 100) : 0;
+
+  const scatterPoints = records.map((r) => {
+    const [hh, mm] = new Intl.DateTimeFormat("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: "Asia/Jakarta",
+    })
+      .format(new Date(r.recorded_at))
+      .split(":")
+      .map(Number);
+    return {
+      x: hh + mm / 60,
+      y: r.confidence,
+      color: CATEGORY_COLOR[r.category],
+      label: `${r.nama} · ${formatTimeID(r.recorded_at)} · ${CATEGORY_LABEL[r.category]} · ${r.confidence}%`,
+    };
+  });
 
   return (
     <div className="anim-stagger flex flex-col gap-7">
@@ -107,6 +125,18 @@ async function LeaderView({ searchParams }: { searchParams: Record<string, strin
           )}
         </section>
       </div>
+
+      <section className="anim-fade-up rounded-2xl border border-border bg-surface p-6">
+        <h2 className="mb-4 text-sm font-semibold text-foreground">Sebaran Jam Absen × Mood × Confidence</h2>
+        {scatterPoints.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Belum ada data absen untuk filter ini.</p>
+        ) : (
+          <ScatterChart
+            points={scatterPoints}
+            legend={CATEGORIES.map((c) => ({ label: CATEGORY_LABEL[c], color: CATEGORY_COLOR[c] }))}
+          />
+        )}
+      </section>
     </div>
   );
 }

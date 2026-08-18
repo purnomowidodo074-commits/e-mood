@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
-import { IconLock, IconBackspace, IconCamera } from "@/components/icons";
-import { KioskBackground } from "@/components/KioskBackground";
+import { IconLock, IconBackspace, IconCamera, IconScanFrame, IconKeypad } from "@/components/icons";
+import { AppBackground } from "@/components/AppBackground";
 
 gsap.registerPlugin(useGSAP);
 
@@ -58,6 +58,9 @@ export function KioskClient({ hasSession }: { hasSession: boolean }) {
   const [result, setResult] = useState<ResultData | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [countdown, setCountdown] = useState(3);
+  // FR-1.1 (scan) vs FR-1.6 (manual keypad fallback) — the barcode scanner types
+  // into the input regardless of which tab is active; this only swaps what's shown.
+  const [entryMode, setEntryMode] = useState<"manual" | "scan">("manual");
 
   // Kiosk PC bisa punya lebih dari satu "kamera" terdaftar (mis. HP yang ditautkan
   // sebagai webcam) — pilih eksplisit alih-alih pasrah ke default OS/browser.
@@ -279,7 +282,7 @@ export function KioskClient({ hasSession }: { hasSession: boolean }) {
 
   return (
     <div className="relative flex min-h-full flex-col overflow-hidden bg-background text-center">
-      <KioskBackground />
+      <AppBackground />
 
       {/* Navbar */}
       <header className="relative z-10 flex items-center justify-between px-6 py-4">
@@ -312,10 +315,7 @@ export function KioskClient({ hasSession }: { hasSession: boolean }) {
           {/* Headline — the attention-grabbing description */}
           <div className="flex flex-col items-center gap-5 lg:items-start">
             <EmojiCycleBadge />
-            <h1 className="text-5xl font-extrabold leading-[1.05] tracking-tight text-foreground sm:text-6xl">
-              Bagaimana perasaan
-              <br className="hidden lg:block" /> Anda hari ini?
-            </h1>
+            <TypewriterHeadline />
             <p className="max-w-md text-base text-muted-foreground">
               Scan kartu Noreg Anda — kamera mengecek kondisi Anda selama 3 detik. Cepat, tidak menghakimi, dan
               hasilnya hanya untuk keselamatan &amp; kesejahteraan kerja.
@@ -323,7 +323,32 @@ export function KioskClient({ hasSession }: { hasSession: boolean }) {
           </div>
 
           {/* Scan card */}
-          <div className="flex flex-col items-center gap-6 rounded-3xl border border-border bg-surface/70 p-8 shadow-2xl backdrop-blur-md">
+          <div className="flex flex-col items-center gap-5 rounded-3xl border border-border bg-surface/70 p-8 shadow-2xl backdrop-blur-md">
+            <div className="flex gap-1 rounded-full border border-border bg-surface-2 p-1">
+              <button
+                type="button"
+                onClick={() => setEntryMode("scan")}
+                className={`flex cursor-pointer items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors duration-[var(--dur-fast)] ${
+                  entryMode === "scan" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <IconScanFrame className="h-3.5 w-3.5" />
+                Scan
+              </button>
+              <button
+                type="button"
+                onClick={() => setEntryMode("manual")}
+                className={`flex cursor-pointer items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors duration-[var(--dur-fast)] ${
+                  entryMode === "manual" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <IconKeypad className="h-3.5 w-3.5" />
+                Manual
+              </button>
+            </div>
+
+            {/* Input tetap ter-mount & fokus di kedua mode — barcode scanner (keyboard-wedge)
+                mengetik ke sini apa pun tab yang aktif (FR-1.1); tab cuma ganti tampilan. */}
             <form onSubmit={handleScanSubmit} className="mx-auto w-full max-w-[220px]">
               <input
                 ref={inputRef}
@@ -331,15 +356,33 @@ export function KioskClient({ hasSession }: { hasSession: boolean }) {
                 onChange={(e) => setNoreg(e.target.value)}
                 autoFocus
                 inputMode="numeric"
-                className="w-full rounded-xl border-2 border-primary/60 bg-surface px-3 py-2.5 text-center font-mono text-lg tracking-[0.25em] text-foreground outline-none transition-colors focus:border-primary"
+                className={`w-full rounded-xl border-2 bg-surface px-3 py-2.5 text-center font-mono text-lg tracking-[0.25em] text-foreground outline-none transition-colors focus:border-primary ${
+                  entryMode === "scan" ? "border-primary anim-pulse-ring" : "border-primary/60"
+                }`}
                 placeholder="•••••••"
               />
             </form>
-            <Keypad
-              onDigit={appendKeypad}
-              onBackspace={() => setNoreg((v) => v.slice(0, -1))}
-              onSubmit={() => handleScanSubmit({ preventDefault() {} } as React.FormEvent)}
-            />
+
+            {/* Fixed-height slot so the card doesn't resize when switching tabs —
+                Scan's content is shorter than the keypad grid, so it's centered
+                inside the same footprint instead of collapsing the layout. */}
+            <div className="flex min-h-[236px] w-full flex-col items-center justify-center">
+              {entryMode === "scan" ? (
+                <div className="anim-fade flex flex-col items-center gap-2 text-center">
+                  <IconScanFrame className="h-10 w-10 text-primary" />
+                  <p className="max-w-[220px] text-xs text-muted-foreground">
+                    Dekatkan barcode kartu ID Anda ke scanner
+                  </p>
+                </div>
+              ) : (
+                <Keypad
+                  onDigit={appendKeypad}
+                  onBackspace={() => setNoreg((v) => v.slice(0, -1))}
+                  onSubmit={() => handleScanSubmit({ preventDefault() {} } as React.FormEvent)}
+                />
+              )}
+            </div>
+
             {cameraDevices.length > 1 && (
               <CameraPicker devices={cameraDevices} value={cameraDeviceId} onChange={handleCameraDeviceChange} />
             )}
@@ -461,6 +504,46 @@ function ResultIcon({ category }: { category: Category }) {
 // The e-Mood mark, alive: cycles happy → netral → badmood on a loop.
 // Plain GSAP timeline (no plugin needed for a 3-item crossfade) — transform +
 // opacity only, static on the first frame when prefers-reduced-motion is set.
+const HEADLINE_TEXT = "Bagaimana perasaan\nAnda hari ini?";
+
+// Typewriter reveal: types the headline in one continuous pass (GSAP tweens a
+// plain counter, not the DOM — cheap, no plugin needed) with a blinking
+// cursor. Skips straight to the full text under prefers-reduced-motion.
+function TypewriterHeadline() {
+  const [shown, setShown] = useState("");
+
+  useGSAP(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setShown(HEADLINE_TEXT);
+      return;
+    }
+    const counter = { n: 0 };
+    gsap.to(counter, {
+      n: HEADLINE_TEXT.length,
+      duration: HEADLINE_TEXT.length * 0.045,
+      delay: 0.2,
+      ease: "none",
+      onUpdate: () => setShown(HEADLINE_TEXT.slice(0, Math.round(counter.n))),
+    });
+  }, []);
+
+  return (
+    <h1 className="text-5xl font-extrabold leading-[1.05] tracking-tight text-foreground sm:text-6xl">
+      {shown.split("\n").map((line, i) => (
+        <span key={i}>
+          {i > 0 && <br />}
+          {line}
+        </span>
+      ))}
+      <span
+        aria-hidden
+        className="ml-0.5 inline-block w-[3px] animate-pulse bg-primary align-middle"
+        style={{ height: "0.85em" }}
+      />
+    </h1>
+  );
+}
+
 function EmojiCycleBadge() {
   const emojiRef = useRef<HTMLSpanElement>(null);
 

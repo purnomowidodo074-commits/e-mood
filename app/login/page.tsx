@@ -1,8 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/authClient";
+import { AppBackground } from "@/components/AppBackground";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -46,67 +48,66 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative flex flex-1 items-center justify-center overflow-hidden px-4">
-      <div
-        className="pointer-events-none absolute -top-40 left-1/2 h-96 w-[36rem] -translate-x-1/2 rounded-full opacity-25 blur-3xl"
-        style={{ background: "radial-gradient(circle, var(--primary), transparent 70%)" }}
-      />
-      <div
-        className="pointer-events-none absolute bottom-[-8rem] right-[-6rem] h-80 w-80 rounded-full opacity-20 blur-3xl"
-        style={{ background: "radial-gradient(circle, var(--secondary), transparent 70%)" }}
-      />
+    <div className="relative flex min-h-full flex-1 flex-col overflow-hidden">
+      <AppBackground />
 
-      <div className="anim-fade-up relative w-full max-w-sm rounded-2xl border border-border bg-surface/90 p-8 shadow-2xl backdrop-blur-sm">
-        <span className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-secondary text-sm font-bold text-primary-foreground shadow-[0_0_24px_-6px_var(--primary)]">
-          e
-        </span>
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">Masuk ke e-Mood</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Akses dashboard dan admin absen emosi.</p>
+      <header className="relative z-10 px-6 py-4">
+        <Image src="/logo.png" alt="Toyota" width={140} height={40} className="h-10 w-auto object-contain" priority />
+      </header>
 
-        <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
-          <div>
-            <label htmlFor="email" className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-border bg-surface-2 px-3.5 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary"
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg border border-border bg-surface-2 px-3.5 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary"
-            />
-          </div>
+      <div className="relative flex flex-1 items-center justify-center px-4">
+        <div className="anim-fade-up relative w-full max-w-sm rounded-2xl border border-border bg-surface/90 p-8 shadow-2xl backdrop-blur-sm">
+          <span className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-secondary text-sm font-bold text-primary-foreground shadow-[0_0_24px_-6px_var(--primary)]">
+            e
+          </span>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">Masuk ke e-Mood</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Akses dashboard dan admin absen emosi.</p>
 
-          {error && (
-            <p role="alert" className="anim-fade text-sm text-destructive">
-              {error}
-            </p>
-          )}
+          <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
+            <div>
+              <label htmlFor="email" className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full rounded-lg border border-border bg-surface-2 px-3.5 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary"
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-lg border border-border bg-surface-2 px-3.5 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary"
+              />
+            </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="mt-1 h-11 cursor-pointer rounded-lg bg-primary font-medium text-primary-foreground transition-all duration-[var(--dur-fast)] hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {loading ? "Memproses..." : "Masuk"}
-          </button>
-        </form>
+            {error && (
+              <p role="alert" className="anim-fade text-sm text-destructive">
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-1 h-11 cursor-pointer rounded-lg bg-primary font-medium text-primary-foreground transition-all duration-[var(--dur-fast)] hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loading ? "Memproses..." : "Masuk"}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
