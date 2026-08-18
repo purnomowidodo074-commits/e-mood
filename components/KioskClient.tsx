@@ -1,8 +1,16 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { IconArrowLeft, IconBackspace, IconFaceHappy, IconFaceNeutral, IconFaceSad, IconCamera } from "@/components/icons";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { IconLock, IconBackspace, IconCamera } from "@/components/icons";
+import { KioskBackground } from "@/components/KioskBackground";
+
+gsap.registerPlugin(useGSAP);
+
+const CYCLE_EMOJI = ["🙂", "😐", "😕"]; // happy, netral, badmood — the e-Mood mark, alive
 
 const ANALYZE_URL = process.env.NEXT_PUBLIC_KIOSK_ANALYZE_URL ?? "http://localhost:8000/analyze";
 const CAPTURE_DURATION_MS = 3000;
@@ -16,10 +24,10 @@ type Stage = "scan" | "welcome" | "camera" | "analyzing" | "result" | "manual" |
 type Member = { id: string; noreg: string; nama: string };
 type ResultData = { nama: string; category: Category; confidence: number; lowConfidence: boolean };
 
-const CATEGORY_META: Record<Category, { label: string; icon: typeof IconFaceHappy; message: string; color: string }> = {
-  HAPPY: { label: "HAPPY", icon: IconFaceHappy, message: "Semangat terus ya!", color: "#34d399" },
-  NETRAL: { label: "NETRAL", icon: IconFaceNeutral, message: "Semoga harimu lancar.", color: "#fbbf24" },
-  BADMOOD: { label: "BADMOOD", icon: IconFaceSad, message: "Semangat ya, hati-hati di area kerja.", color: "#fb923c" },
+const CATEGORY_META: Record<Category, { label: string; emoji: string; message: string; color: string }> = {
+  HAPPY: { label: "HAPPY", emoji: "🙂", message: "Semangat terus ya!", color: "#34d399" },
+  NETRAL: { label: "NETRAL", emoji: "😐", message: "Semoga harimu lancar.", color: "#fbbf24" },
+  BADMOOD: { label: "BADMOOD", emoji: "😕", message: "Semangat ya, hati-hati di area kerja.", color: "#fb923c" },
 };
 
 // Beep via Web Audio (no asset file needed) — FR-4.2, Should priority.
@@ -42,7 +50,7 @@ function beep(freq: number, durationMs: number) {
 
 const CAMERA_STORAGE_KEY = "kiosk-camera-device-id";
 
-export function KioskClient({ isAdmin }: { isAdmin: boolean }) {
+export function KioskClient({ hasSession }: { hasSession: boolean }) {
   const [stage, setStage] = useState<Stage>("scan");
   const [noreg, setNoreg] = useState("");
   const [member, setMember] = useState<Member | null>(null);
@@ -270,50 +278,73 @@ export function KioskClient({ isAdmin }: { isAdmin: boolean }) {
   }
 
   return (
-    <div className="relative flex min-h-full flex-col items-center justify-center gap-8 overflow-hidden bg-background px-6 py-10 text-center">
+    <div className="relative flex min-h-full flex-col overflow-hidden bg-background text-center">
+      <KioskBackground />
+
+      {/* Navbar */}
+      <header className="relative z-10 flex items-center justify-between px-6 py-4">
+        <Image src="/logo.png" alt="Toyota" width={140} height={40} className="h-10 w-auto object-contain" priority />
+        <Link
+          href={hasSession ? "/dashboard" : "/login"}
+          aria-label={hasSession ? "Buka dashboard" : "Login admin"}
+          title={hasSession ? "Dashboard" : "Login admin"}
+          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-border bg-surface/80 text-muted-foreground backdrop-blur-sm transition-colors hover:border-primary/40 hover:text-primary"
+        >
+          <IconLock className="h-4 w-4" />
+        </Link>
+      </header>
+      {/* Safety-yellow hazard stripe — the industrial accent, Casting-Division register */}
       <div
-        className="pointer-events-none absolute -top-32 left-1/2 h-80 w-[40rem] -translate-x-1/2 rounded-full opacity-[0.18] blur-3xl"
-        style={{ background: "radial-gradient(circle, var(--primary), transparent 70%)" }}
+        className="relative z-10 h-1.5 w-full"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(-45deg, var(--accent) 0 14px, #0a0a0a 14px 28px)",
+        }}
       />
 
-      {isAdmin && (
-        <Link
-          href="/dashboard"
-          className="absolute right-4 top-4 z-10 flex cursor-pointer items-center gap-1.5 rounded-full border border-border bg-surface/80 px-3.5 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur-sm transition-colors hover:border-primary/40 hover:text-primary"
-        >
-          <IconArrowLeft className="h-3.5 w-3.5" />
-          Dashboard
-        </Link>
-      )}
+      <div className="relative flex flex-1 flex-col items-center justify-center gap-8 px-6 py-10">
 
       {stage === "scan" && (
-        <div key="scan" className="anim-fade-up relative flex w-full max-w-md flex-col items-center gap-7">
-          <div className="flex flex-col items-center gap-2">
-            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-secondary text-lg font-bold text-primary-foreground shadow-[0_0_30px_-6px_var(--primary)]">
-              e
-            </span>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Scan Kartu Noreg</h1>
+        <div
+          key="scan"
+          className="anim-fade-up relative grid w-full max-w-5xl grid-cols-1 items-center gap-10 text-center lg:grid-cols-[1.1fr_1fr] lg:text-left"
+        >
+          {/* Headline — the attention-grabbing description */}
+          <div className="flex flex-col items-center gap-5 lg:items-start">
+            <EmojiCycleBadge />
+            <h1 className="text-5xl font-extrabold leading-[1.05] tracking-tight text-foreground sm:text-6xl">
+              Bagaimana perasaan
+              <br className="hidden lg:block" /> Anda hari ini?
+            </h1>
+            <p className="max-w-md text-base text-muted-foreground">
+              Scan kartu Noreg Anda — kamera mengecek kondisi Anda selama 3 detik. Cepat, tidak menghakimi, dan
+              hasilnya hanya untuk keselamatan &amp; kesejahteraan kerja.
+            </p>
           </div>
-          <form onSubmit={handleScanSubmit} className="w-full">
-            <input
-              ref={inputRef}
-              value={noreg}
-              onChange={(e) => setNoreg(e.target.value)}
-              autoFocus
-              inputMode="numeric"
-              className="w-full rounded-2xl border-2 border-primary/60 bg-surface px-4 py-5 text-center font-mono text-3xl tracking-[0.3em] text-foreground outline-none transition-colors focus:border-primary"
-              placeholder="•••••••"
+
+          {/* Scan card */}
+          <div className="flex flex-col items-center gap-6 rounded-3xl border border-border bg-surface/70 p-8 shadow-2xl backdrop-blur-md">
+            <form onSubmit={handleScanSubmit} className="mx-auto w-full max-w-[220px]">
+              <input
+                ref={inputRef}
+                value={noreg}
+                onChange={(e) => setNoreg(e.target.value)}
+                autoFocus
+                inputMode="numeric"
+                className="w-full rounded-xl border-2 border-primary/60 bg-surface px-3 py-2.5 text-center font-mono text-lg tracking-[0.25em] text-foreground outline-none transition-colors focus:border-primary"
+                placeholder="•••••••"
+              />
+            </form>
+            <Keypad
+              onDigit={appendKeypad}
+              onBackspace={() => setNoreg((v) => v.slice(0, -1))}
+              onSubmit={() => handleScanSubmit({ preventDefault() {} } as React.FormEvent)}
             />
-          </form>
-          <Keypad
-            onDigit={appendKeypad}
-            onBackspace={() => setNoreg((v) => v.slice(0, -1))}
-            onSubmit={() => handleScanSubmit({ preventDefault() {} } as React.FormEvent)}
-          />
-          {cameraDevices.length > 1 && (
-            <CameraPicker devices={cameraDevices} value={cameraDeviceId} onChange={handleCameraDeviceChange} />
-          )}
-          <PrivacyNotice />
+            {cameraDevices.length > 1 && (
+              <CameraPicker devices={cameraDevices} value={cameraDeviceId} onChange={handleCameraDeviceChange} />
+            )}
+            <PrivacyNotice />
+          </div>
         </div>
       )}
 
@@ -357,7 +388,6 @@ export function KioskClient({ isAdmin }: { isAdmin: boolean }) {
           <div className="anim-stagger flex gap-4">
             {(Object.keys(CATEGORY_META) as Category[]).map((c) => {
               const meta = CATEGORY_META[c];
-              const Icon = meta.icon;
               return (
                 <button
                   key={c}
@@ -367,7 +397,7 @@ export function KioskClient({ isAdmin }: { isAdmin: boolean }) {
                   onMouseEnter={(e) => (e.currentTarget.style.boxShadow = `0 0 24px -4px ${meta.color}`)}
                   onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "0 0 0 0 transparent")}
                 >
-                  <Icon className="h-10 w-10" style={{ color: meta.color }} />
+                  <span className="text-4xl">{meta.emoji}</span>
                   <span className="text-sm font-medium text-muted-foreground">{meta.label}</span>
                 </button>
               );
@@ -377,21 +407,11 @@ export function KioskClient({ isAdmin }: { isAdmin: boolean }) {
       )}
 
       {stage === "result" && result && (
-        <div key="result" className="anim-scale-in relative flex flex-col items-center gap-3">
-          {(() => {
-            const Icon = CATEGORY_META[result.category].icon;
-            return (
-              <div
-                className="flex h-24 w-24 items-center justify-center rounded-full"
-                style={{ background: `${CATEGORY_META[result.category].color}22` }}
-              >
-                <Icon className="h-14 w-14" style={{ color: CATEGORY_META[result.category].color }} />
-              </div>
-            );
-          })()}
-          <h1 className="text-2xl font-bold text-foreground">{result.nama}</h1>
-          <p className="text-muted-foreground">{CATEGORY_META[result.category].message}</p>
-          {result.lowConfidence && <p className="text-xs text-accent">(hasil kurang yakin)</p>}
+        <div key="result" className="relative flex flex-col items-center gap-3">
+          <ResultIcon category={result.category} />
+          <h1 className="anim-fade-up text-2xl font-bold text-foreground">{result.nama}</h1>
+          <p className="anim-fade-up text-muted-foreground">{CATEGORY_META[result.category].message}</p>
+          {result.lowConfidence && <p className="anim-fade-up text-xs text-accent">(hasil kurang yakin)</p>}
         </div>
       )}
 
@@ -400,7 +420,72 @@ export function KioskClient({ isAdmin }: { isAdmin: boolean }) {
           {message}
         </p>
       )}
+      </div>
     </div>
+  );
+}
+
+// Result reveal: starts fully absent (scale 0) then pops/bounces into view —
+// a glossy "3D" sphere badge (layered radial-gradient highlight + shadow,
+// not a flat icon) built from our existing SVG face icons, no image assets.
+function ResultIcon({ category }: { category: Category }) {
+  const scope = useRef<HTMLSpanElement>(null);
+  const meta = CATEGORY_META[category];
+
+  useGSAP(
+    () => {
+      gsap.fromTo(
+        scope.current,
+        { scale: 0, opacity: 0, rotate: -14 },
+        { scale: 1, opacity: 1, rotate: 0, duration: 0.7, ease: "back.out(1.8)" }
+      );
+    },
+    { scope }
+  );
+
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <span
+        className="rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-wide"
+        style={{ background: `${meta.color}22`, color: meta.color }}
+      >
+        {meta.label}
+      </span>
+      <span ref={scope} className="text-[9rem] leading-none drop-shadow-lg">
+        {meta.emoji}
+      </span>
+    </div>
+  );
+}
+
+// The e-Mood mark, alive: cycles happy → netral → badmood on a loop.
+// Plain GSAP timeline (no plugin needed for a 3-item crossfade) — transform +
+// opacity only, static on the first frame when prefers-reduced-motion is set.
+function EmojiCycleBadge() {
+  const emojiRef = useRef<HTMLSpanElement>(null);
+
+  useGSAP(
+    () => {
+      const el = emojiRef.current;
+      if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+      let i = 0;
+      gsap
+        .timeline({ repeat: -1, repeatDelay: 1.1 })
+        .to(el, { opacity: 0, scale: 0.7, duration: 0.25, ease: "power2.in" })
+        .call(() => {
+          i = (i + 1) % CYCLE_EMOJI.length;
+          el.textContent = CYCLE_EMOJI[i];
+        })
+        .to(el, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.6)" });
+    },
+    { scope: emojiRef }
+  );
+
+  return (
+    <span ref={emojiRef} className="inline-block text-7xl leading-none drop-shadow-lg">
+      {CYCLE_EMOJI[0]}
+    </span>
   );
 }
 

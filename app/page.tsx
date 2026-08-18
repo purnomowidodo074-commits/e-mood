@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth";
 
-export default async function Home() {
-  const user = await getCurrentUser();
-  redirect(user ? "/dashboard" : "/login");
+// Kiosk is the landing surface (FR-7.1 — no login needed to absen). Admin/
+// dashboard access lives behind the lock icon inside /kiosk itself.
+export default function Home() {
+  redirect("/kiosk");
 }
