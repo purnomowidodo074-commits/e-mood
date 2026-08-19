@@ -78,7 +78,7 @@ async function LeaderView({ searchParams }: { searchParams: Record<string, strin
       </header>
 
       <section className="grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-border bg-border lg:grid-cols-[minmax(0,1fr)_1.4fr]">
-        <div className="flex flex-col justify-center gap-3 bg-surface p-6">
+        <div className="flex flex-col justify-center gap-3 glass-panel p-6">
           <div className="flex items-baseline gap-2">
             <span className="font-mono text-5xl font-semibold tabular-nums text-foreground">{summary.total}</span>
             <span className="font-mono text-xl text-muted-foreground">/ {summary.totalActiveMembers}</span>
@@ -92,18 +92,18 @@ async function LeaderView({ searchParams }: { searchParams: Record<string, strin
           </div>
           <span className="font-mono text-xs text-muted-foreground">{pct}%</span>
         </div>
-        <div className="bg-surface p-6">
+        <div className="glass-panel p-6">
           <DonutChart segments={segments} />
         </div>
       </section>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <section className="anim-fade-up rounded-2xl border border-border bg-surface p-6 lg:col-span-2">
+        <section className="anim-fade-up rounded-2xl border border-border glass-panel p-6 lg:col-span-2">
           <h2 className="mb-4 text-sm font-semibold text-foreground">Detail Absen ({records.length})</h2>
           <RecordsTable records={records} />
         </section>
 
-        <section className="anim-fade-up rounded-2xl border border-border bg-surface p-6">
+        <section className="anim-fade-up rounded-2xl border border-border glass-panel p-6">
           <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
             <IconUsers className="h-4 w-4 text-muted-foreground" />
             Belum Absen ({unrecorded.length})
@@ -126,7 +126,7 @@ async function LeaderView({ searchParams }: { searchParams: Record<string, strin
         </section>
       </div>
 
-      <section className="anim-fade-up rounded-2xl border border-border bg-surface p-6">
+      <section className="anim-fade-up rounded-2xl border border-border glass-panel p-6">
         <h2 className="mb-4 text-sm font-semibold text-foreground">Sebaran Jam Absen × Mood × Confidence</h2>
         {scatterPoints.length === 0 ? (
           <p className="text-sm text-muted-foreground">Belum ada data absen untuk filter ini.</p>
@@ -339,12 +339,12 @@ async function SectionHeadView({
         periode ini, seluruhnya agregat — tanpa nama individu.
       </p>
 
-      <section className="anim-fade-up rounded-2xl border border-border bg-surface p-6">
+      <section className="anim-fade-up rounded-2xl border border-border glass-panel p-6">
         <h2 className="mb-4 text-sm font-semibold text-foreground">Tren Harian per Kategori</h2>
         <LineChart labels={dayList.map(formatDayLabel)} series={trendSeries} />
       </section>
 
-      <section className="anim-fade-up rounded-2xl border border-border bg-surface p-6">
+      <section className="anim-fade-up rounded-2xl border border-border glass-panel p-6">
         <h2 className="mb-4 text-sm font-semibold text-foreground">Perbandingan Antar Shift</h2>
         <BarChart groups={shiftGroups} />
       </section>
