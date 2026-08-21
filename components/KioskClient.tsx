@@ -324,6 +324,7 @@ export function KioskClient({ hasSession }: { hasSession: boolean }) {
 
           {/* Scan card */}
           <div className="flex flex-col items-center gap-5 rounded-3xl border border-border bg-surface/70 p-8 shadow-2xl backdrop-blur-md">
+            <LiveClock />
             <div className="flex gap-1 rounded-full border border-border bg-surface-2 p-1">
               <button
                 type="button"
@@ -541,6 +542,30 @@ function TypewriterHeadline() {
         style={{ height: "0.85em" }}
       />
     </h1>
+  );
+}
+
+// Realtime clock above the noreg input — ticks every second, WIB-formatted.
+function LiveClock() {
+  const [now, setNow] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setNow(new Date());
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  if (!now) return <div className="h-8" />; // avoid SSR/client mismatch on first paint
+
+  return (
+    <div className="flex flex-col items-center gap-0.5">
+      <span className="font-mono text-2xl font-bold tabular-nums text-foreground">
+        {now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+      </span>
+      <span className="text-xs text-muted-foreground">
+        {now.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+      </span>
+    </div>
   );
 }
 
