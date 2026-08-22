@@ -281,7 +281,7 @@ export function KioskClient({ hasSession }: { hasSession: boolean }) {
   }
 
   return (
-    <div className="relative flex min-h-full flex-col overflow-hidden bg-background text-center">
+    <div className="relative flex h-screen flex-col overflow-hidden bg-background text-center">
       <AppBackground />
 
       {/* Navbar */}
@@ -305,12 +305,12 @@ export function KioskClient({ hasSession }: { hasSession: boolean }) {
         }}
       />
 
-      <div className="relative flex flex-1 flex-col items-center justify-center gap-8 px-6 py-10">
+      <div className="relative flex flex-1 flex-col items-center justify-center gap-6 px-6 py-6">
 
       {stage === "scan" && (
         <div
           key="scan"
-          className="anim-fade-up relative grid w-full max-w-5xl grid-cols-1 items-center gap-10 text-center lg:grid-cols-[1.1fr_1fr] lg:text-left"
+          className="anim-fade-up relative grid w-full max-w-5xl grid-cols-1 items-center gap-6 text-center lg:grid-cols-[1.1fr_1fr] lg:text-left"
         >
           {/* Headline — the attention-grabbing description */}
           <div className="flex flex-col items-center gap-5 lg:items-start">
@@ -323,7 +323,7 @@ export function KioskClient({ hasSession }: { hasSession: boolean }) {
           </div>
 
           {/* Scan card */}
-          <div className="flex flex-col items-center gap-5 rounded-3xl border border-border bg-surface/70 p-8 shadow-2xl backdrop-blur-md">
+          <div className="flex flex-col items-center gap-3 rounded-3xl border border-border bg-surface/70 p-5 shadow-2xl backdrop-blur-md">
             <LiveClock />
             <div className="flex gap-1 rounded-full border border-border bg-surface-2 p-1">
               <button
@@ -367,10 +367,10 @@ export function KioskClient({ hasSession }: { hasSession: boolean }) {
             {/* Fixed-height slot so the card doesn't resize when switching tabs —
                 Scan's content is shorter than the keypad grid, so it's centered
                 inside the same footprint instead of collapsing the layout. */}
-            <div className="flex min-h-[236px] w-full flex-col items-center justify-center">
+            <div className="flex min-h-[176px] w-full flex-col items-center justify-center">
               {entryMode === "scan" ? (
-                <div className="anim-fade flex flex-col items-center gap-2 text-center">
-                  <IconScanFrame className="h-10 w-10 text-primary" />
+                <div className="anim-fade flex flex-col items-center gap-1.5 text-center">
+                  <IconScanFrame className="h-8 w-8 text-primary" />
                   <p className="max-w-[220px] text-xs text-muted-foreground">
                     Dekatkan barcode kartu ID Anda ke scanner
                   </p>
@@ -406,13 +406,13 @@ export function KioskClient({ hasSession }: { hasSession: boolean }) {
             Hadapkan wajah ke kamera
           </p>
           <div className="relative overflow-hidden rounded-3xl border border-border shadow-2xl">
-            <video ref={videoRef} autoPlay muted playsInline className="h-72 w-96 bg-black object-cover" />
+            <video ref={videoRef} autoPlay muted playsInline className="h-[28rem] w-[36rem] bg-black object-cover" />
             <div className="pointer-events-none absolute inset-6 rounded-full border-4 border-dashed border-white/70" />
             <span className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 font-mono text-lg font-bold text-white backdrop-blur-sm">
               {countdown}
             </span>
           </div>
-          <div className="h-1.5 w-80 overflow-hidden rounded-full bg-surface-2">
+          <div className="h-1.5 w-[36rem] overflow-hidden rounded-full bg-surface-2">
             <div className="anim-progress h-full rounded-full bg-gradient-to-r from-primary to-secondary" />
           </div>
           <canvas ref={canvasRef} className="hidden" />
@@ -559,7 +559,7 @@ function LiveClock() {
 
   return (
     <div className="flex flex-col items-center gap-0.5">
-      <span className="font-mono text-2xl font-bold tabular-nums text-foreground">
+      <span className="font-mono text-xl font-bold tabular-nums text-foreground">
         {now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
       </span>
       <span className="text-xs text-muted-foreground">
@@ -607,13 +607,13 @@ function Keypad({
   onSubmit: () => void;
 }) {
   return (
-    <div className="grid grid-cols-3 gap-2.5">
+    <div className="grid grid-cols-3 gap-2">
       {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((d) => (
         <button
           key={d}
           type="button"
           onClick={() => onDigit(d)}
-          className="cursor-pointer rounded-xl border border-border bg-surface px-7 py-3.5 text-lg font-medium text-foreground/90 transition-colors duration-[var(--dur-fast)] hover:bg-surface-2 active:scale-95"
+          className="cursor-pointer rounded-xl border border-border bg-surface px-6 py-2 text-base font-medium text-foreground/90 transition-colors duration-[var(--dur-fast)] hover:bg-surface-2 active:scale-95"
         >
           {d}
         </button>
@@ -621,21 +621,21 @@ function Keypad({
       <button
         type="button"
         onClick={onBackspace}
-        className="flex cursor-pointer items-center justify-center rounded-xl border border-border bg-surface px-7 py-3.5 text-foreground/90 transition-colors duration-[var(--dur-fast)] hover:bg-surface-2 active:scale-95"
+        className="flex cursor-pointer items-center justify-center rounded-xl border border-border bg-surface px-6 py-2 text-foreground/90 transition-colors duration-[var(--dur-fast)] hover:bg-surface-2 active:scale-95"
       >
-        <IconBackspace className="h-5 w-5" />
+        <IconBackspace className="h-4 w-4" />
       </button>
       <button
         type="button"
         onClick={() => onDigit("0")}
-        className="cursor-pointer rounded-xl border border-border bg-surface px-7 py-3.5 text-lg font-medium text-foreground/90 transition-colors duration-[var(--dur-fast)] hover:bg-surface-2 active:scale-95"
+        className="cursor-pointer rounded-xl border border-border bg-surface px-6 py-2 text-base font-medium text-foreground/90 transition-colors duration-[var(--dur-fast)] hover:bg-surface-2 active:scale-95"
       >
         0
       </button>
       <button
         type="button"
         onClick={onSubmit}
-        className="cursor-pointer rounded-xl bg-primary px-7 py-3.5 text-lg font-medium text-primary-foreground transition-transform duration-[var(--dur-fast)] hover:brightness-110 active:scale-95"
+        className="cursor-pointer rounded-xl bg-primary px-6 py-2 text-base font-medium text-primary-foreground transition-transform duration-[var(--dur-fast)] hover:brightness-110 active:scale-95"
       >
         OK
       </button>

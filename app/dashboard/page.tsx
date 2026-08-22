@@ -2,7 +2,6 @@ import { requireUser } from "@/lib/auth";
 import {
   getMoodSummary,
   getMoodRecords,
-  getUnrecordedMembers,
   getDailyTrend,
   getShiftComparison,
   type Category,
@@ -12,7 +11,7 @@ import { todayISO, isoDaysAgo, formatDateID, formatTimeID, formatDayLabel } from
 import { CATEGORY_COLOR, CATEGORY_BG, CATEGORY_LABEL } from "@/lib/colors";
 import { DonutChart, BarChart, LineChart, ScatterChart } from "@/components/Charts";
 import { followUpAction } from "@/lib/actions";
-import { IconFaceHappy, IconFaceNeutral, IconFaceSad, IconUsers } from "@/components/icons";
+import { IconFaceHappy, IconFaceNeutral, IconFaceSad } from "@/components/icons";
 
 const CATEGORIES: Category[] = ["HAPPY", "NETRAL", "BADMOOD"];
 const SHIFTS = ["1", "2", "3"];
@@ -36,11 +35,7 @@ async function LeaderView({ searchParams }: { searchParams: Record<string, strin
   const date = typeof searchParams.date === "string" ? searchParams.date : todayISO();
   const shift = typeof searchParams.shift === "string" && searchParams.shift ? searchParams.shift : undefined;
 
-  const [summary, records, unrecorded] = await Promise.all([
-    getMoodSummary(date, shift),
-    getMoodRecords(date, shift),
-    getUnrecordedMembers(date),
-  ]);
+  const [summary, records] = await Promise.all([getMoodSummary(date, shift), getMoodRecords(date, shift)]);
 
   const segments = CATEGORIES.map((c) => ({
     label: CATEGORY_LABEL[c],
@@ -71,72 +66,53 @@ async function LeaderView({ searchParams }: { searchParams: Record<string, strin
     <div className="anim-stagger flex flex-col gap-7">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Dashboard</h1>
+          <h1 className="heading-editorial text-3xl font-semibold text-foreground">Dashboard</h1>
           <p className="mt-1 text-sm text-muted-foreground">{formatDateID(date)}</p>
         </div>
         <FilterForm date={date} shift={shift} />
       </header>
 
-      <section className="grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-border bg-border lg:grid-cols-[minmax(0,1fr)_1.4fr]">
-        <div className="flex flex-col justify-center gap-3 glass-panel p-6">
-          <div className="flex items-baseline gap-2">
-            <span className="font-mono text-5xl font-semibold tabular-nums text-foreground">{summary.total}</span>
-            <span className="font-mono text-xl text-muted-foreground">/ {summary.totalActiveMembers}</span>
+      <div className="bento-leader">
+        <div className="area-stat editorial-card anim-fade-up flex flex-col gap-3 p-6">
+          <h2 className="text-sm font-semibold text-foreground">Absen Hari Ini</h2>
+          <div className="flex flex-1 flex-col justify-center gap-3">
+            <div className="flex items-baseline gap-2">
+              <span className="font-mono text-5xl font-semibold tabular-nums text-foreground">{summary.total}</span>
+              <span className="font-mono text-xl text-muted-foreground">/ {summary.totalActiveMembers}</span>
+            </div>
+            <p className="text-sm font-medium text-muted-foreground">member sudah absen hari ini</p>
+            <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
+              <div
+                className="h-full rounded-full bg-primary transition-[width] duration-700 ease-[var(--ease-out-expo)]"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <span className="font-mono text-xs text-muted-foreground">{pct}%</span>
           </div>
-          <p className="text-sm font-medium text-muted-foreground">member sudah absen hari ini</p>
-          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-primary to-secondary transition-[width] duration-700 ease-[var(--ease-out-expo)]"
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-          <span className="font-mono text-xs text-muted-foreground">{pct}%</span>
         </div>
-        <div className="glass-panel p-6">
+
+        <div className="area-scatter editorial-card anim-fade-up p-6">
+          <h2 className="mb-4 text-sm font-semibold text-foreground">Distribusi Mood</h2>
           <DonutChart segments={segments} />
         </div>
-      </section>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <section className="anim-fade-up rounded-2xl border border-border glass-panel p-6 lg:col-span-2">
+        <section className="area-table editorial-card anim-fade-up p-6">
           <h2 className="mb-4 text-sm font-semibold text-foreground">Detail Absen ({records.length})</h2>
           <RecordsTable records={records} />
         </section>
 
-        <section className="anim-fade-up rounded-2xl border border-border glass-panel p-6">
-          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
-            <IconUsers className="h-4 w-4 text-muted-foreground" />
-            Belum Absen ({unrecorded.length})
-          </h2>
-          {unrecorded.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Semua member aktif sudah absen.</p>
+        <section className="area-donut editorial-card anim-fade-up p-6">
+          <h2 className="mb-4 text-sm font-semibold text-foreground">Sebaran Jam × Mood × Confidence</h2>
+          {scatterPoints.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Belum ada data absen untuk filter ini.</p>
           ) : (
-            <ul className="max-h-96 space-y-0.5 overflow-y-auto text-sm">
-              {unrecorded.map((m) => (
-                <li
-                  key={m.noreg}
-                  className="flex justify-between rounded-lg px-2 py-1.5 transition-colors duration-[var(--dur-fast)] hover:bg-surface-2"
-                >
-                  <span className="text-foreground/90">{m.nama}</span>
-                  <span className="font-mono text-muted-foreground">{m.noreg}</span>
-                </li>
-              ))}
-            </ul>
+            <ScatterChart
+              points={scatterPoints}
+              legend={CATEGORIES.map((c) => ({ label: CATEGORY_LABEL[c], color: CATEGORY_COLOR[c] }))}
+            />
           )}
         </section>
       </div>
-
-      <section className="anim-fade-up rounded-2xl border border-border glass-panel p-6">
-        <h2 className="mb-4 text-sm font-semibold text-foreground">Sebaran Jam Absen × Mood × Confidence</h2>
-        {scatterPoints.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Belum ada data absen untuk filter ini.</p>
-        ) : (
-          <ScatterChart
-            points={scatterPoints}
-            legend={CATEGORIES.map((c) => ({ label: CATEGORY_LABEL[c], color: CATEGORY_COLOR[c] }))}
-          />
-        )}
-      </section>
     </div>
   );
 }
@@ -308,7 +284,7 @@ async function SectionHeadView({
     <div className="anim-stagger flex flex-col gap-7">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Tren Agregat</h1>
+          <h1 className="heading-editorial text-3xl font-semibold text-foreground">Tren Agregat</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {formatDateID(startDate)} – {formatDateID(endDate)}
           </p>
@@ -334,20 +310,22 @@ async function SectionHeadView({
         </form>
       </header>
 
-      <p className="anim-fade-up text-sm text-muted-foreground">
-        <span className="font-mono font-semibold text-foreground">{totalInRange}</span> absen tercatat sepanjang
-        periode ini, seluruhnya agregat — tanpa nama individu.
-      </p>
+      <div className="bento-section">
+        <p className="area-stat editorial-card anim-fade-up flex items-center p-6 text-sm text-muted-foreground">
+          <span className="font-mono font-semibold text-foreground">{totalInRange}</span>&nbsp;absen tercatat
+          sepanjang periode ini, seluruhnya agregat — tanpa nama individu.
+        </p>
 
-      <section className="anim-fade-up rounded-2xl border border-border glass-panel p-6">
-        <h2 className="mb-4 text-sm font-semibold text-foreground">Tren Harian per Kategori</h2>
-        <LineChart labels={dayList.map(formatDayLabel)} series={trendSeries} />
-      </section>
+        <section className="area-trend editorial-card anim-fade-up p-6">
+          <h2 className="mb-4 text-sm font-semibold text-foreground">Tren Harian per Kategori</h2>
+          <LineChart labels={dayList.map(formatDayLabel)} series={trendSeries} />
+        </section>
 
-      <section className="anim-fade-up rounded-2xl border border-border glass-panel p-6">
-        <h2 className="mb-4 text-sm font-semibold text-foreground">Perbandingan Antar Shift</h2>
-        <BarChart groups={shiftGroups} />
-      </section>
+        <section className="area-shift editorial-card anim-fade-up p-6">
+          <h2 className="mb-4 text-sm font-semibold text-foreground">Perbandingan Antar Shift</h2>
+          <BarChart groups={shiftGroups} />
+        </section>
+      </div>
     </div>
   );
 }

@@ -169,3 +169,64 @@ body {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
+
+/* Bento grids: asymmetric tiles via named areas, collapsing to one column on mobile */
+.bento-leader {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-areas:
+    "stat stat stat donut donut donut"
+    "table table table table scatter scatter";
+}
+
+.bento-section {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-areas:
+    "stat stat stat"
+    "trend trend shift"
+    "trend trend shift";
+}
+
+@media (max-width: 767px) {
+  .bento-leader {
+    grid-template-columns: 1fr;
+    grid-template-areas: "stat" "donut" "table" "scatter";
+  }
+  .bento-section {
+    grid-template-columns: 1fr;
+    grid-template-areas: "stat" "trend" "shift";
+  }
+}
+
+.area-stat { grid-area: stat; }
+.area-donut { grid-area: donut; }
+.area-table { grid-area: table; }
+.area-scatter { grid-area: scatter; }
+.area-trend { grid-area: trend; }
+.area-shift { grid-area: shift; }
+
+/* Dashboard editorial serif for headings — the Newsreader variable is set on
+   the dashboard's <main> (app/dashboard/layout.tsx), so this cascades there
+   without needing a separate theme scope. Colors stay the site's original
+   dark palette (root :root tokens above). */
+.heading-editorial {
+  font-family: var(--font-editorial-serif), Georgia, serif;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+/* Dashboard bento card: translucent glass over AppBackground, same treatment
+   as .glass-panel but with a crisper 12px radius for the editorial grid. */
+.editorial-card {
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  border-radius: 0.75rem;
+  box-shadow:
+    0 8px 32px -12px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 0 color-mix(in srgb, white 6%, transparent);
+}
