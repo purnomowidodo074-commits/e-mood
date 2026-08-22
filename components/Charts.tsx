@@ -28,7 +28,7 @@ export function ScatterChart({
       <div className="flex flex-wrap gap-4 text-sm">
         {legend.map((l) => (
           <span key={l.label} className="flex items-center gap-1.5 text-muted-foreground">
-            <span className="h-2.5 w-2.5 rounded-full" style={{ background: l.color, boxShadow: `0 0 8px -1px ${l.color}` }} />
+            <span className="h-2.5 w-2.5 rounded-full" style={{ background: l.color }} />
             {l.label}
           </span>
         ))}
@@ -67,12 +67,15 @@ type Segment = { label: string; value: number; color: string };
 
 export function DonutChart({ segments, size = 168 }: { segments: Segment[]; size?: number }) {
   const total = segments.reduce((s, x) => s + x.value, 0);
+  const gap = 1.2; // % gap between segments so the dividing lines actually show
   let cursor = 0;
   const stops: string[] = [];
   for (const seg of segments) {
     const pct = total > 0 ? (seg.value / total) * 100 : 0;
-    stops.push(`${seg.color} ${cursor}% ${cursor + pct}%`);
-    cursor += pct;
+    const start = cursor;
+    const end = cursor + pct;
+    stops.push(`var(--surface) ${start}%`, `${seg.color} ${start}%`, `${seg.color} ${end - gap}%`, `var(--surface) ${end - gap}%`);
+    cursor = end;
   }
   const gradient = total > 0 ? `conic-gradient(from -90deg, ${stops.join(", ")})` : "var(--surface-2)";
 
@@ -96,7 +99,7 @@ export function DonutChart({ segments, size = 168 }: { segments: Segment[]; size
           <li key={s.label} className="flex items-center gap-2.5">
             <span
               className="h-2.5 w-2.5 shrink-0 rounded-full"
-              style={{ background: s.color, boxShadow: `0 0 10px -1px ${s.color}` }}
+              style={{ background: s.color }}
             />
             <span className="w-16 text-muted-foreground">{s.label}</span>
             <span className="font-mono font-semibold tabular-nums text-foreground">{s.value}</span>
@@ -165,7 +168,7 @@ export function LineChart({
       <div className="flex flex-wrap gap-4 text-sm">
         {series.map((s) => (
           <span key={s.label} className="flex items-center gap-1.5 text-muted-foreground">
-            <span className="h-2.5 w-2.5 rounded-full" style={{ background: s.color, boxShadow: `0 0 8px -1px ${s.color}` }} />
+            <span className="h-2.5 w-2.5 rounded-full" style={{ background: s.color }} />
             {s.label}
           </span>
         ))}

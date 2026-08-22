@@ -31,7 +31,13 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
 // Leader / Admin: per-individual view
 // ---------------------------------------------------------------------------
 
-async function LeaderView({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }) {
+export async function LeaderView({
+  searchParams,
+  readOnly = false,
+}: {
+  searchParams: Record<string, string | string[] | undefined>;
+  readOnly?: boolean;
+}) {
   const date = typeof searchParams.date === "string" ? searchParams.date : todayISO();
   const shift = typeof searchParams.shift === "string" && searchParams.shift ? searchParams.shift : undefined;
 
@@ -91,14 +97,16 @@ async function LeaderView({ searchParams }: { searchParams: Record<string, strin
           </div>
         </div>
 
-        <div className="area-scatter editorial-card anim-fade-up p-6">
+        <div className="area-scatter editorial-card anim-fade-up flex flex-col p-6">
           <h2 className="mb-4 text-sm font-semibold text-foreground">Distribusi Mood</h2>
-          <DonutChart segments={segments} />
+          <div className="flex flex-1 items-center justify-center">
+            <DonutChart segments={segments} />
+          </div>
         </div>
 
         <section className="area-table editorial-card anim-fade-up p-6">
           <h2 className="mb-4 text-sm font-semibold text-foreground">Detail Absen ({records.length})</h2>
-          <RecordsTable records={records} />
+          <RecordsTable records={records} readOnly={readOnly} />
         </section>
 
         <section className="area-donut editorial-card anim-fade-up p-6">
@@ -154,14 +162,14 @@ function FilterForm({ date, shift }: { date: string; shift?: string }) {
   );
 }
 
-function RecordsTable({ records }: { records: MoodRecordRow[] }) {
+function RecordsTable({ records, readOnly = false }: { records: MoodRecordRow[]; readOnly?: boolean }) {
   if (records.length === 0) {
     return <p className="text-sm text-muted-foreground">Belum ada data absen untuk filter ini.</p>;
   }
   return (
-    <div className="overflow-x-auto">
+    <div className="max-h-72 overflow-auto">
       <table className="w-full text-sm">
-        <thead>
+        <thead className="sticky top-0 z-10 bg-surface/95 backdrop-blur">
           <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
             <th className="py-2 pr-3 font-medium">Nama</th>
             <th className="py-2 pr-3 font-medium">Noreg</th>
@@ -199,7 +207,13 @@ function RecordsTable({ records }: { records: MoodRecordRow[] }) {
                 <td className="py-2.5 pr-3 text-muted-foreground">{r.source === "auto" ? "Otomatis" : "Manual"}</td>
                 <td className="py-2.5 pr-3">
                   {r.category === "BADMOOD" ? (
-                    <FollowUpForm record={r} />
+                    readOnly ? (
+                      <span className="text-xs text-muted-foreground">
+                        {r.followed_up ? "Sudah ditindaklanjuti" : "Belum ditindaklanjuti"}
+                      </span>
+                    ) : (
+                      <FollowUpForm record={r} />
+                    )
                   ) : (
                     <span className="text-muted-foreground/40">—</span>
                   )}

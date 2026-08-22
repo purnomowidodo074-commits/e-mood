@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
-import { IconLock, IconBackspace, IconCamera, IconScanFrame, IconKeypad } from "@/components/icons";
+import { IconLock, IconLayoutDashboard, IconBackspace, IconCamera, IconScanFrame, IconKeypad } from "@/components/icons";
 import { AppBackground } from "@/components/AppBackground";
 
 gsap.registerPlugin(useGSAP);
@@ -50,7 +50,7 @@ function beep(freq: number, durationMs: number) {
 
 const CAMERA_STORAGE_KEY = "kiosk-camera-device-id";
 
-export function KioskClient({ hasSession }: { hasSession: boolean }) {
+export function KioskClient() {
   const [stage, setStage] = useState<Stage>("scan");
   const [noreg, setNoreg] = useState("");
   const [member, setMember] = useState<Member | null>(null);
@@ -287,14 +287,25 @@ export function KioskClient({ hasSession }: { hasSession: boolean }) {
       {/* Navbar */}
       <header className="relative z-10 flex items-center justify-between px-6 py-4">
         <Image src="/logo.png" alt="Toyota" width={140} height={40} className="h-10 w-auto object-contain" priority />
-        <Link
-          href={hasSession ? "/dashboard" : "/login"}
-          aria-label={hasSession ? "Buka dashboard" : "Login admin"}
-          title={hasSession ? "Dashboard" : "Login admin"}
-          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-border bg-surface/80 text-muted-foreground backdrop-blur-sm transition-colors hover:border-primary/40 hover:text-primary"
-        >
-          <IconLock className="h-4 w-4" />
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/kiosk/dashboard"
+            aria-label="Buka dashboard"
+            title="Dashboard"
+            className="flex cursor-pointer items-center gap-2 rounded-full bg-primary/15 px-3.5 py-1.5 text-sm font-medium text-primary backdrop-blur-sm transition-colors hover:bg-primary/25"
+          >
+            <IconLayoutDashboard className="h-4 w-4" />
+            Dashboard
+          </Link>
+          <Link
+            href="/login"
+            aria-label="Login admin"
+            title="Login admin"
+            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-border bg-surface/80 text-muted-foreground backdrop-blur-sm transition-colors hover:border-primary/40 hover:text-primary"
+          >
+            <IconLock className="h-4 w-4" />
+          </Link>
+        </div>
       </header>
       {/* Safety-yellow hazard stripe — the industrial accent, Casting-Division register */}
       <div
