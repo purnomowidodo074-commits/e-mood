@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
-import { IconLock, IconLayoutDashboard, IconBackspace, IconCamera, IconScanFrame, IconKeypad } from "@/components/icons";
+import { IconUser, IconLayoutDashboard, IconBackspace, IconCamera, IconScanFrame, IconKeypad } from "@/components/icons";
 import { AppBackground } from "@/components/AppBackground";
 
 gsap.registerPlugin(useGSAP);
@@ -303,7 +303,7 @@ export function KioskClient() {
             title="Login admin"
             className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-border bg-surface/80 text-muted-foreground backdrop-blur-sm transition-colors hover:border-primary/40 hover:text-primary"
           >
-            <IconLock className="h-4 w-4" />
+            <IconUser className="h-4 w-4" />
           </Link>
         </div>
       </header>

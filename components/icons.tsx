@@ -29,6 +29,15 @@ export function IconLock(props: IconProps) {
   );
 }
 
+export function IconUser(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M4.5 20c0-4.14 3.36-7 7.5-7s7.5 2.86 7.5 7" />
+    </Svg>
+  );
+}
+
 export function IconScanFrame(props: IconProps) {
   return (
     <Svg {...props}>
