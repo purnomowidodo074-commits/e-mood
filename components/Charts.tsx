@@ -3,14 +3,16 @@
 
 type ScatterPoint = { x: number; y: number; color: string; label: string };
 
-/** Jam absen (x, 0–24) × nilai confidence (y, 0–100), tiap titik diwarnai per kategori mood. */
+/**
+ * Jam absen × nilai confidence (y, 0–100), tiap titik diwarnai per kategori mood.
+ * Absen berlangsung sekitar 2 jam, jadi sumbu-x auto-zoom ke rentang waktu data
+ * (dibulatkan ke kelipatan 15 menit) alih-alih membentang penuh 00:00–24:00.
+ */
 export function ScatterChart({
   points,
-  xTicks = [0, 4, 8, 12, 16, 20, 24],
   legend,
 }: {
   points: ScatterPoint[];
-  xTicks?: number[];
   legend: { label: string; color: string }[];
 }) {
   const width = 640;
@@ -20,8 +22,28 @@ export function ScatterChart({
   const plotH = height - pad.top - pad.bottom;
   const yTicks = [0, 25, 50, 75, 100];
 
-  const sx = (x: number) => pad.left + (x / 24) * plotW;
+  const STEP = 0.25; // 15 menit, dalam satuan jam
+  const xs = points.map((p) => p.x);
+  const rawMin = xs.length ? Math.min(...xs) : 7;
+  const rawMax = xs.length ? Math.max(...xs) : 8;
+  // beri jarak satu tick di tiap sisi, dibulatkan ke grid 15 menit
+  const xMin = Math.max(0, Math.floor(rawMin / STEP) * STEP - STEP);
+  const xMax = Math.min(24, Math.ceil(rawMax / STEP) * STEP + STEP);
+  const xRange = Math.max(xMax - xMin, STEP);
+
+  const xTicks: number[] = [];
+  for (let t = xMin; t <= xMax + 1e-9; t += STEP) xTicks.push(Math.round(t * 100) / 100);
+  // kalau rentangnya kebetulan lebar, jangan sampai label 15-menitan berdesakan
+  const xLabelTicks = xTicks.length > 13 ? xTicks.filter((_, i) => i % Math.ceil(xTicks.length / 13) === 0) : xTicks;
+
+  const sx = (x: number) => pad.left + ((x - xMin) / xRange) * plotW;
   const sy = (y: number) => pad.top + plotH - (y / 100) * plotH;
+
+  function formatTick(h: number) {
+    const hh = Math.floor(h);
+    const mm = Math.round((h - hh) * 60);
+    return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -44,8 +66,11 @@ export function ScatterChart({
             </g>
           ))}
           {xTicks.map((h) => (
+            <line key={h} x1={sx(h)} x2={sx(h)} y1={pad.top} y2={pad.top + plotH} stroke="var(--border)" strokeWidth={1} opacity={0.4} />
+          ))}
+          {xLabelTicks.map((h) => (
             <text key={h} x={sx(h)} y={height - 8} fontSize={9} textAnchor="middle" fill="var(--muted-foreground)">
-              {String(h).padStart(2, "0")}:00
+              {formatTick(h)}
             </text>
           ))}
           {points.map((p, i) => (
