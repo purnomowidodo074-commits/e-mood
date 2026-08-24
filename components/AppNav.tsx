@@ -36,7 +36,7 @@ export function AppNav({ name, role }: { name: string; role: Role }) {
           <Link href="/dashboard" className="flex items-center gap-3">
             <Image src="/logo.png" alt="Toyota" width={100} height={28} className="h-7 w-auto object-contain" priority />
             <span className="h-5 w-px bg-border" />
-            <span className="text-[15px] font-semibold tracking-tight text-foreground">e-Mood</span>
+            <span className="text-[15px] font-semibold tracking-tight text-foreground">Happiness</span>
           </Link>
           <nav className="flex gap-1">
             {links.map((l) => {

@@ -58,9 +58,9 @@ export default function LoginPage() {
       <div className="relative flex flex-1 items-center justify-center px-4">
         <div className="anim-fade-up relative w-full max-w-sm rounded-2xl border border-border bg-surface/90 p-8 shadow-2xl backdrop-blur-sm">
           <span className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-secondary text-sm font-bold text-primary-foreground shadow-[0_0_24px_-6px_var(--primary)]">
-            e
+            H
           </span>
-          <h1 className="text-xl font-semibold tracking-tight text-foreground">Masuk ke e-Mood</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">Masuk ke Happiness</h1>
           <p className="mt-1 text-sm text-muted-foreground">Akses dashboard dan admin absen emosi.</p>
 
           <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">

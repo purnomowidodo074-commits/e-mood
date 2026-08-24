@@ -15,7 +15,7 @@ const firaCode = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "e-Mood — Emotion Attendance Monitoring",
+  title: "Happiness — Emotion Attendance Monitoring",
   description: "Dashboard & admin absen emosi Casting Division",
 };
 
