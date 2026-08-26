@@ -157,6 +157,29 @@ body {
   animation: progressFill 3s linear both;
 }
 
+/* Themed scrollbar for scrollable tables/charts — the browser default
+   (a stark white/gray bar) belongs to no design system. Track stays fully
+   transparent so only a quiet thumb shows while actively scrolling; hover
+   brightens it slightly for affordance. Firefox + WebKit. */
+.scrollbar-theme {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--foreground) 22%, transparent) transparent;
+}
+.scrollbar-theme::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+.scrollbar-theme::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-theme::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--foreground) 22%, transparent);
+  border-radius: 999px;
+}
+.scrollbar-theme::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--foreground) 40%, transparent);
+}
+
 /* Glassmorphism: translucent, blurred panels over AppBackground */
 .glass-panel {
   background: color-mix(in srgb, var(--surface) 55%, transparent);

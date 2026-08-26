@@ -55,7 +55,7 @@ export function ScatterChart({
           </span>
         ))}
       </div>
-      <div className="anim-fade overflow-x-auto">
+      <div className="anim-fade scrollbar-theme overflow-x-auto">
         <svg viewBox={`0 0 ${width} ${height}`} className="w-full" style={{ minWidth: 320 }}>
           {yTicks.map((v) => (
             <g key={v}>
@@ -198,7 +198,7 @@ export function LineChart({
           </span>
         ))}
       </div>
-      <div className="anim-fade overflow-x-auto">
+      <div className="anim-fade scrollbar-theme overflow-x-auto">
         <svg width={width} height={height + 24} className="min-w-full">
           <defs>
             {series.map((s) => (

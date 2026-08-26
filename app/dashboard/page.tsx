@@ -167,7 +167,7 @@ function RecordsTable({ records, readOnly = false }: { records: MoodRecordRow[];
     return <p className="text-sm text-muted-foreground">Belum ada data absen untuk filter ini.</p>;
   }
   return (
-    <div className="max-h-72 overflow-auto">
+    <div className="scrollbar-theme max-h-72 overflow-auto">
       <table className="w-full text-sm">
         <thead className="sticky top-0 z-10 bg-surface/95 backdrop-blur">
           <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">

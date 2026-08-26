@@ -65,7 +65,7 @@ export default async function MembersPage(props: PageProps<"/admin/members">) {
         </form>
       </section>
 
-      <section className="anim-fade-up overflow-x-auto rounded-2xl border border-border bg-surface">
+      <section className="anim-fade-up scrollbar-theme overflow-x-auto rounded-2xl border border-border bg-surface">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
