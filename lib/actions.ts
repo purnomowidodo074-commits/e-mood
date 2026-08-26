@@ -16,6 +16,19 @@ export async function followUpAction(formData: FormData) {
   revalidatePath("/dashboard");
 }
 
+// ---- Admin: reset data ----
+
+/** Wipes all mood records (attendance history) back to zero. Admin-only —
+ * the confirmation UI lives in components/ResetDataButton.tsx. Members and
+ * dashboard user accounts are untouched. */
+export async function resetMoodRecordsAction(): Promise<{ deleted: number }> {
+  await requireUser(["admin"]);
+  const deleted = await q.resetAllMoodRecords();
+  revalidatePath("/dashboard");
+  revalidatePath("/kiosk/dashboard");
+  return { deleted };
+}
+
 // ---- Admin: members ----
 
 export async function createMemberAction(formData: FormData) {

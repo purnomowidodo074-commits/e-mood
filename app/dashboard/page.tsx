@@ -1,4 +1,5 @@
-import { requireUser } from "@/lib/auth";
+import { requireUser, type Role } from "@/lib/auth";
+import { ResetDataButton } from "@/components/ResetDataButton";
 import {
   getMoodSummary,
   getMoodRecords,
@@ -24,7 +25,7 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
   if (user.role === "section_head") {
     return <SectionHeadView searchParams={searchParams} />;
   }
-  return <LeaderView searchParams={searchParams} />;
+  return <LeaderView searchParams={searchParams} role={user.role} />;
 }
 
 // ---------------------------------------------------------------------------
@@ -34,9 +35,11 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
 export async function LeaderView({
   searchParams,
   readOnly = false,
+  role,
 }: {
   searchParams: Record<string, string | string[] | undefined>;
   readOnly?: boolean;
+  role?: Role;
 }) {
   const date = typeof searchParams.date === "string" ? searchParams.date : todayISO();
   const shift = typeof searchParams.shift === "string" && searchParams.shift ? searchParams.shift : undefined;
@@ -75,7 +78,10 @@ export async function LeaderView({
           <h1 className="heading-editorial text-3xl font-semibold text-foreground">Dashboard</h1>
           <p className="mt-1 text-sm text-muted-foreground">{formatDateID(date)}</p>
         </div>
-        <FilterForm date={date} shift={shift} />
+        <div className="flex flex-wrap items-end gap-2.5">
+          <FilterForm date={date} shift={shift} />
+          {!readOnly && role === "admin" && <ResetDataButton />}
+        </div>
       </header>
 
       <div className="bento-leader">

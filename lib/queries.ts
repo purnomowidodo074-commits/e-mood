@@ -203,6 +203,14 @@ async function insertRecord(
   }
 }
 
+/** Admin-only "reset data" (dashboard): wipes every mood record so all counts
+ * restart at zero. Members and dashboard user accounts are untouched — this
+ * clears attendance history only, not master data. */
+export async function resetAllMoodRecords(): Promise<number> {
+  const rows = await sql`delete from mood_records returning id`;
+  return rows.length;
+}
+
 export async function setFollowUp(
   recordId: string,
   followed_up: boolean,
