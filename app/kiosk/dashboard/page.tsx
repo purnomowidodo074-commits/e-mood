@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { Newsreader } from "next/font/google";
+import { Fraunces } from "next/font/google";
 import { AppBackground } from "@/components/AppBackground";
 import { IconArrowLeft } from "@/components/icons";
 import { LeaderView } from "@/app/dashboard/page";
 
-const editorialSerif = Newsreader({
+// Mirrors app/dashboard/layout.tsx — same editorial serif, kept in sync since
+// this public kiosk-dashboard mirror renders the same LeaderView headings.
+const editorialSerif = Fraunces({
   variable: "--font-editorial-serif",
   subsets: ["latin"],
   weight: ["500", "600"],

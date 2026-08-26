@@ -1,11 +1,14 @@
-import { Newsreader } from "next/font/google";
+import { Fraunces } from "next/font/google";
 import { requireUser } from "@/lib/auth";
 import { AppNav } from "@/components/AppNav";
 import { AppBackground } from "@/components/AppBackground";
 
 // Editorial serif for dashboard headings only — scoped to this layout, doesn't
-// touch the sans/mono fonts loaded globally in app/layout.tsx.
-const editorialSerif = Newsreader({
+// touch the sans/mono fonts loaded globally in app/layout.tsx. Fraunces swaps
+// in for the previous Newsreader: same "editorial" register but with warm,
+// slightly characterful curves that sit better against the gold/black palette
+// than Newsreader's cooler, more formal broadsheet feel.
+const editorialSerif = Fraunces({
   variable: "--font-editorial-serif",
   subsets: ["latin"],
   weight: ["500", "600"],

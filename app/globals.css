@@ -1,34 +1,38 @@
 @import "tailwindcss";
 
 /*
-  e-Mood — dark, full-palette industrial system (Casting Division: molten metal,
-  ladle, furnace — the palette leans into that register rather than away from it).
-  Chosen deliberately over the earlier light theme: dark everywhere, including
-  the kiosk, trading the safety of "predictable factory-kiosk light UI" for a
-  bolder, higher-contrast dark surface (still ≥4.5:1 on body text).
+  e-Mood — safety-yellow industrial system (Casting Division: hazard tape,
+  forklift paint, warning signage — a register the app already gestured at via
+  its hazard-stripe divider). Yellow now carries the identity instead of
+  living as a rare accent: near-black warm charcoal ground, one gold ramp
+  (deep → mid → bright) doing primary/secondary/accent duty, with mood
+  categories pulled off that hue entirely so a HAPPY/NETRAL/BADMOOD badge
+  never reads as "more brand chrome" (still dark everywhere, still ≥4.5:1 on
+  body text).
 */
 :root {
-  --background: #090c12;
-  --surface: #121826;
-  --surface-2: #1a2233;
-  --border: #262f45;
-  --foreground: #eef2ff;
-  --muted-foreground: #8993ab;
+  --background: #0b0a08;
+  --surface: #17140f;
+  --surface-2: #211c15;
+  --border: #3a3324;
+  --foreground: #f7f3e8;
+  --muted-foreground: #9c927a;
 
-  --primary: #5b8def;
-  --primary-foreground: #04070d;
-  --secondary: #a78bfa;
-  --accent: #fbbf24;
-  --accent-foreground: #24160a;
+  --primary: #eab308;
+  --primary-foreground: #171204;
+  --secondary: #ca8a04;
+  --accent: #fde047;
+  --accent-foreground: #241c04;
   --destructive: #f87171;
 
-  /* Mood categories: distinct hues, none reads as a verdict */
-  --happy: #34d399;
-  --happy-bg: rgba(52, 211, 153, 0.14);
-  --netral: #fbbf24;
-  --netral-bg: rgba(251, 191, 36, 0.14);
-  --badmood: #fb923c;
-  --badmood-bg: rgba(251, 146, 60, 0.14);
+  /* Mood categories deliberately off the brand-yellow hue — a NETRAL badge
+     sitting on a wall of gold UI still has to read as its own signal. */
+  --happy: #4ade80;
+  --happy-bg: rgba(74, 222, 128, 0.14);
+  --netral: #94a3b8;
+  --netral-bg: rgba(148, 163, 184, 0.14);
+  --badmood: #f87171;
+  --badmood-bg: rgba(248, 113, 113, 0.14);
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --dur-fast: 150ms;
@@ -56,15 +60,15 @@
   --color-netral-bg: var(--netral-bg);
   --color-badmood: var(--badmood);
   --color-badmood-bg: var(--badmood-bg);
-  --font-sans: var(--font-fira-sans);
-  --font-mono: var(--font-fira-code);
+  --font-sans: var(--font-display-sans);
+  --font-mono: var(--font-mono-num);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
-  letter-spacing: -0.011em;
+  letter-spacing: -0.015em;
 }
 
 * {
@@ -208,10 +212,10 @@ body {
 .area-trend { grid-area: trend; }
 .area-shift { grid-area: shift; }
 
-/* Dashboard editorial serif for headings — the Newsreader variable is set on
+/* Dashboard editorial serif for headings — the Fraunces variable is set on
    the dashboard's <main> (app/dashboard/layout.tsx), so this cascades there
-   without needing a separate theme scope. Colors stay the site's original
-   dark palette (root :root tokens above). */
+   without needing a separate theme scope. Colors come from the root tokens
+   above (the yellow/near-black system). */
 .heading-editorial {
   font-family: var(--font-editorial-serif), Georgia, serif;
   letter-spacing: -0.02em;

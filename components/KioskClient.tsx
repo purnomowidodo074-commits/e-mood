@@ -312,7 +312,7 @@ export function KioskClient() {
         className="relative z-10 h-1.5 w-full"
         style={{
           backgroundImage:
-            "repeating-linear-gradient(-45deg, var(--accent) 0 14px, #0a0a0a 14px 28px)",
+            "repeating-linear-gradient(-45deg, var(--accent) 0 14px, var(--background) 14px 28px)",
         }}
       />
 
@@ -483,19 +483,54 @@ export function KioskClient() {
 // Result reveal: starts fully absent (scale 0) then pops/bounces into view —
 // a glossy "3D" sphere badge (layered radial-gradient highlight + shadow,
 // not a flat icon) built from our existing SVG face icons, no image assets.
+// HAPPY gets one extra authored moment on top — a soft brand-gold glow
+// breathing behind the emoji, since gold is now the "good news" color the
+// whole redesign is built around. NETRAL/BADMOOD stay a plain pop: giving
+// every outcome the same celebration would just be a scattered-effects tic.
 function ResultIcon({ category }: { category: Category }) {
   const scope = useRef<HTMLSpanElement>(null);
+  const glowRef = useRef<HTMLSpanElement>(null);
   const meta = CATEGORY_META[category];
 
   useGSAP(
     () => {
-      gsap.fromTo(
-        scope.current,
-        { scale: 0, opacity: 0, rotate: -14 },
-        { scale: 1, opacity: 1, rotate: 0, duration: 0.7, ease: "back.out(1.8)" }
-      );
+      const mm = gsap.matchMedia();
+      mm.add({ reduceMotion: "(prefers-reduced-motion: reduce)" }, ({ conditions }) => {
+        const { reduceMotion } = conditions as { reduceMotion: boolean };
+
+        gsap.fromTo(
+          scope.current,
+          { scale: 0, opacity: 0, rotate: reduceMotion ? 0 : -14 },
+          { scale: 1, opacity: 1, rotate: 0, duration: reduceMotion ? 0.01 : 0.7, ease: "back.out(1.8)" }
+        );
+
+        if (category === "HAPPY" && glowRef.current && !reduceMotion) {
+          gsap.fromTo(
+            glowRef.current,
+            { scale: 0.6, opacity: 0 },
+            {
+              scale: 1,
+              opacity: 1,
+              duration: 0.8,
+              delay: 0.15,
+              ease: "power2.out",
+              onComplete: () => {
+                gsap.to(glowRef.current, {
+                  scale: 1.12,
+                  opacity: 0.65,
+                  duration: 1.4,
+                  repeat: -1,
+                  yoyo: true,
+                  ease: "sine.inOut",
+                });
+              },
+            }
+          );
+        }
+      });
+      return () => mm.revert();
     },
-    { scope }
+    { scope, dependencies: [category] }
   );
 
   return (
@@ -506,8 +541,18 @@ function ResultIcon({ category }: { category: Category }) {
       >
         {meta.label}
       </span>
-      <span ref={scope} className="text-[9rem] leading-none drop-shadow-lg">
-        {meta.emoji}
+      <span className="relative flex items-center justify-center">
+        {category === "HAPPY" && (
+          <span
+            ref={glowRef}
+            aria-hidden
+            className="pointer-events-none absolute inset-0 -z-10 rounded-full opacity-0"
+            style={{ background: "radial-gradient(circle, var(--accent) 0%, transparent 70%)", filter: "blur(20px)" }}
+          />
+        )}
+        <span ref={scope} className="text-[9rem] leading-none drop-shadow-lg">
+          {meta.emoji}
+        </span>
       </span>
     </div>
   );
