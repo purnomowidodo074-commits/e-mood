@@ -1,15 +1,22 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { resetMoodRecordsAction } from "@/lib/actions";
 import { IconAlertTriangle, IconRotateCcw } from "@/components/icons";
 
-// Admin-only, destructive: wipes every mood record so dashboard counts
-// restart at zero. Gated twice — the button only renders for role "admin"
-// (app/dashboard/page.tsx), and the server action re-checks the role itself
-// (lib/actions.ts) since a client-side gate alone is not enforcement.
-export function ResetDataButton() {
+// Destructive: wipes every mood record so dashboard counts restart at zero.
+// `action` picks which server action actually runs the wipe — the caller
+// decides that (app/dashboard/page.tsx), since the two entry points have
+// very different auth: resetMoodRecordsAction re-checks admin server-side,
+// resetMoodRecordsPublicAction (the /kiosk/dashboard mirror) has none at all
+// by explicit product decision. This component only renders the dialog.
+export function ResetDataButton({
+  action = resetMoodRecordsAction,
+}: {
+  action?: () => Promise<{ deleted: number }>;
+}) {
   const [open, setOpen] = useState(false);
   const [done, setDone] = useState<number | null>(null);
   const [error, setError] = useState("");
@@ -41,7 +48,7 @@ export function ResetDataButton() {
     setError("");
     startTransition(async () => {
       try {
-        const { deleted } = await resetMoodRecordsAction();
+        const { deleted } = await action();
         setDone(deleted);
         router.refresh();
       } catch {
@@ -61,13 +68,14 @@ export function ResetDataButton() {
         Reset Data
       </button>
 
-      {open && (
-        <div
-          className="anim-fade fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
-          onClick={(e) => {
-            if (e.target === e.currentTarget && !pending) close();
-          }}
-        >
+      {open &&
+        createPortal(
+          <div
+            className="anim-fade fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+            onClick={(e) => {
+              if (e.target === e.currentTarget && !pending) close();
+            }}
+          >
           <div
             role="alertdialog"
             aria-modal="true"
@@ -142,8 +150,9 @@ export function ResetDataButton() {
               </>
             )}
           </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </>
   );
 }

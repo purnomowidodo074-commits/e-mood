@@ -1,4 +1,4 @@
-import { requireUser, type Role } from "@/lib/auth";
+import { requireUser } from "@/lib/auth";
 import { ResetDataButton } from "@/components/ResetDataButton";
 import {
   getMoodSummary,
@@ -11,7 +11,7 @@ import {
 import { todayISO, isoDaysAgo, formatDateID, formatTimeID, formatDayLabel } from "@/lib/date";
 import { CATEGORY_COLOR, CATEGORY_BG, CATEGORY_LABEL } from "@/lib/colors";
 import { DonutChart, BarChart, LineChart, ScatterChart } from "@/components/Charts";
-import { followUpAction } from "@/lib/actions";
+import { followUpAction, resetMoodRecordsPublicAction } from "@/lib/actions";
 import { IconFaceHappy, IconFaceNeutral, IconFaceSad } from "@/components/icons";
 
 const CATEGORIES: Category[] = ["HAPPY", "NETRAL", "BADMOOD"];
@@ -25,7 +25,7 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
   if (user.role === "section_head") {
     return <SectionHeadView searchParams={searchParams} />;
   }
-  return <LeaderView searchParams={searchParams} role={user.role} />;
+  return <LeaderView searchParams={searchParams} showReset={user.role === "admin"} />;
 }
 
 // ---------------------------------------------------------------------------
@@ -35,11 +35,16 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
 export async function LeaderView({
   searchParams,
   readOnly = false,
-  role,
+  showReset = false,
+  resetIsPublic = false,
 }: {
   searchParams: Record<string, string | string[] | undefined>;
   readOnly?: boolean;
-  role?: Role;
+  /** Show the destructive Reset Data button in the header. */
+  showReset?: boolean;
+  /** When true, the button calls resetMoodRecordsPublicAction (no auth) —
+   * only ever passed true from the public /kiosk/dashboard mirror. */
+  resetIsPublic?: boolean;
 }) {
   const date = typeof searchParams.date === "string" ? searchParams.date : todayISO();
   const shift = typeof searchParams.shift === "string" && searchParams.shift ? searchParams.shift : undefined;
@@ -80,7 +85,7 @@ export async function LeaderView({
         </div>
         <div className="flex flex-wrap items-end gap-2.5">
           <FilterForm date={date} shift={shift} />
-          {!readOnly && role === "admin" && <ResetDataButton />}
+          {showReset && <ResetDataButton action={resetIsPublic ? resetMoodRecordsPublicAction : undefined} />}
         </div>
       </header>
 

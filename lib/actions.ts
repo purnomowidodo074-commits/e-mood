@@ -16,17 +16,34 @@ export async function followUpAction(formData: FormData) {
   revalidatePath("/dashboard");
 }
 
-// ---- Admin: reset data ----
+// ---- Reset data ----
+// Two entry points, same underlying wipe. Kept as separate exports (rather
+// than one action with a bypassable flag) so the no-auth path is a explicit,
+// grep-able decision in the code, not something a future edit widens by
+// accident. Both are wired up in components/ResetDataButton.tsx.
 
-/** Wipes all mood records (attendance history) back to zero. Admin-only —
- * the confirmation UI lives in components/ResetDataButton.tsx. Members and
- * dashboard user accounts are untouched. */
-export async function resetMoodRecordsAction(): Promise<{ deleted: number }> {
-  await requireUser(["admin"]);
+async function doResetMoodRecords(): Promise<{ deleted: number }> {
   const deleted = await q.resetAllMoodRecords();
   revalidatePath("/dashboard");
   revalidatePath("/kiosk/dashboard");
   return { deleted };
+}
+
+/** Wipes all mood records (attendance history) back to zero. Used by the
+ * admin dashboard's Reset Data button — re-checks requireUser(["admin"])
+ * server-side since the button's role gate in the UI is not itself
+ * enforcement. Members and dashboard user accounts are untouched. */
+export async function resetMoodRecordsAction(): Promise<{ deleted: number }> {
+  await requireUser(["admin"]);
+  return doResetMoodRecords();
+}
+
+/** Same wipe, but reachable with NO authentication at all — wired to the
+ * public, no-login /kiosk/dashboard mirror at the product owner's explicit
+ * request (anyone with access to that screen can trigger it; there is
+ * deliberately no password or role check here). */
+export async function resetMoodRecordsPublicAction(): Promise<{ deleted: number }> {
+  return doResetMoodRecords();
 }
 
 // ---- Admin: members ----
