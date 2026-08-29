@@ -29,3 +29,19 @@ export function formatDayLabel(iso: string): string {
     new Date(iso)
   );
 }
+
+export function isoDateAddDays(iso: string, days: number): string {
+  const d = new Date(iso + "T00:00:00");
+  d.setDate(d.getDate() + days);
+  return new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(d);
+}
+
+export function isoDateMinusDays(iso: string, days: number): string {
+  return isoDateAddDays(iso, -days);
+}
+
+export function daysRange(endIso: string, count: number): string[] {
+  const out: string[] = [];
+  for (let i = count - 1; i >= 0; i--) out.push(isoDateMinusDays(endIso, i));
+  return out;
+}

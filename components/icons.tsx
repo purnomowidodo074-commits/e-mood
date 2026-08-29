@@ -199,3 +199,22 @@ export function IconPlus(props: IconProps) {
     </Svg>
   );
 }
+
+export function IconRotateCcw(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M3.5 12a8.5 8.5 0 1 0 2.9-6.4" />
+      <path d="M3.5 4.5v4.5h4.5" />
+    </Svg>
+  );
+}
+
+export function IconAlertTriangle(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 3.5l9.5 16.5H2.5L12 3.5z" strokeLinejoin="round" />
+      <path d="M12 10v4" />
+      <path d="M12 17.2h.01" strokeWidth={2.6} />
+    </Svg>
+  );
+}

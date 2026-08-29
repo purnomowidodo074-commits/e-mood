@@ -1,10 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/authClient";
 import { AppBackground } from "@/components/AppBackground";
+import { IconArrowLeft } from "@/components/icons";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -51,8 +53,15 @@ export default function LoginPage() {
     <div className="relative flex min-h-full flex-1 flex-col overflow-hidden">
       <AppBackground />
 
-      <header className="relative z-10 px-6 py-4">
+      <header className="relative z-10 flex items-center justify-between px-6 py-4">
         <Image src="/logo.png" alt="Toyota" width={140} height={40} className="h-10 w-auto object-contain" priority />
+        <Link
+          href="/kiosk"
+          className="inline-flex items-center gap-2 rounded-full border border-border bg-surface/80 px-3.5 py-1.5 text-sm font-medium text-muted-foreground backdrop-blur-sm transition-colors hover:border-primary/40 hover:text-primary"
+        >
+          <IconArrowLeft className="h-4 w-4" />
+          Kembali ke Kiosk
+        </Link>
       </header>
 
       <div className="relative flex flex-1 items-center justify-center px-4">

@@ -90,11 +90,14 @@ export default async function ConfigPage() {
 
       <section className="anim-fade-up rounded-2xl border border-border bg-surface p-6">
         <h2 className="mb-3 text-sm font-semibold text-foreground">Jam Shift</h2>
+        <p className="mb-3 text-xs text-muted-foreground">Hanya <span className="font-medium text-foreground">Day</span> &amp; <span className="font-medium text-foreground">Night</span> — Night mendukung overnight (mis. 18:00–06:00).</p>
         <div className="flex flex-col gap-3">
-          {shifts.map((s) => (
-            <form key={s.shift} action={updateShiftConfigAction} className="flex items-end gap-3">
+          {shifts
+            .filter((s) => s.shift === "Day" || s.shift === "Night")
+            .map((s) => (
+            <form key={s.shift} action={updateShiftConfigAction} className="flex flex-wrap items-end gap-3">
               <input type="hidden" name="shift" value={s.shift} />
-              <span className="w-16 text-sm font-medium text-foreground/90">Shift {s.shift}</span>
+              <span className="inline-flex w-16 items-center justify-center rounded-full border border-border bg-surface-2 px-2.5 py-1 text-xs font-semibold tracking-wide text-foreground/90">{s.shift}</span>
               <label className="text-xs font-medium text-muted-foreground">
                 <span className="mb-1 block">Mulai</span>
                 <input

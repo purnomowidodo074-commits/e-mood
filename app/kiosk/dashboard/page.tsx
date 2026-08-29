@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { Newsreader } from "next/font/google";
+import { Fraunces } from "next/font/google";
 import { AppBackground } from "@/components/AppBackground";
 import { IconArrowLeft } from "@/components/icons";
 import { LeaderView } from "@/app/dashboard/page";
 
-const editorialSerif = Newsreader({
+// Mirrors app/dashboard/layout.tsx — same editorial serif, kept in sync since
+// this public kiosk-dashboard mirror renders the same LeaderView headings.
+const editorialSerif = Fraunces({
   variable: "--font-editorial-serif",
   subsets: ["latin"],
   weight: ["500", "600"],
@@ -13,6 +15,8 @@ const editorialSerif = Newsreader({
 // Public, read-only mirror of /dashboard reachable straight from the kiosk —
 // no login (FR: kiosk dashboard button must not gate on auth). Follow-up
 // notes are view-only here; editing still requires the real admin login.
+// Reset Data IS shown here too, unauthenticated, per explicit product
+// decision — see resetMoodRecordsPublicAction in lib/actions.ts.
 export default async function KioskDashboardPage(props: PageProps<"/kiosk/dashboard">) {
   const searchParams = await props.searchParams;
 
@@ -31,7 +35,7 @@ export default async function KioskDashboardPage(props: PageProps<"/kiosk/dashbo
         <span className="text-sm font-medium text-muted-foreground">Kiosk</span>
       </header>
       <main className="relative mx-auto w-full max-w-7xl flex-1 px-4 pb-6 sm:px-6">
-        <LeaderView searchParams={searchParams} readOnly />
+        <LeaderView searchParams={searchParams} readOnly showReset resetIsPublic />
       </main>
     </div>
   );

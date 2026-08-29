@@ -1,5 +1,8 @@
+"use client";
+
 // Hand-rolled, dependency-free chart primitives (donut/bar/line/scatter).
 // skipped: charting library (Recharts) — these are simple enough not to need one.
+import { useEffect, useRef, useState } from "react";
 
 type ScatterPoint = { x: number; y: number; color: string; label: string };
 
@@ -55,7 +58,7 @@ export function ScatterChart({
           </span>
         ))}
       </div>
-      <div className="anim-fade overflow-x-auto">
+      <div className="anim-fade scrollbar-theme overflow-x-auto">
         <svg viewBox={`0 0 ${width} ${height}`} className="w-full" style={{ minWidth: 320 }}>
           {yTicks.map((v) => (
             <g key={v}>
@@ -109,10 +112,10 @@ export function DonutChart({ segments, size = 168 }: { segments: Segment[]; size
       <div
         role="img"
         aria-label={segments.map((s) => `${s.label}: ${s.value}`).join(", ")}
-        className="anim-scale-in relative shrink-0 rounded-full p-[3px]"
+        className="anim-scale-in relative shrink-0 rounded-full p-[22px]"
         style={{ width: size, height: size, background: gradient }}
       >
-        <div className="flex h-full w-full items-center justify-center rounded-full bg-surface">
+        <div className="flex h-full w-full items-center justify-center rounded-full bg-surface shadow-[inset_0_1px_0_0_color-mix(in_srgb,white_6%,transparent)]">
           <div className="flex flex-col items-center">
             <span className="font-mono text-3xl font-semibold tabular-nums text-foreground">{total}</span>
             <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">absen</span>
@@ -162,9 +165,81 @@ export function BarChart({ groups }: { groups: BarGroup[] }) {
               </div>
             ))}
           </div>
-          <span className="text-xs font-medium text-muted-foreground">Shift {g.label}</span>
+          <span className="text-xs font-medium text-muted-foreground">{g.label}</span>
         </div>
       ))}
+    </div>
+  );
+}
+
+export type HorizontalStackGroup = {
+  line: string;
+  values: { label: string; color: string; value: number }[];
+  total: number;
+};
+
+export function HorizontalStackedBarChart({ groups }: { groups: HorizontalStackGroup[] }) {
+  const max = Math.max(1, ...groups.map((g) => g.total));
+  if (groups.length === 0) {
+    return <p className="text-sm text-muted-foreground">Belum ada data line untuk periode ini.</p>;
+  }
+  // Y ticks (quantity) — left axis for vertical stacked bars
+  const yTicks = (() => {
+    const step = Math.ceil(max / 4);
+    const ticks = [0, step, step * 2, step * 3, max].filter((v, i, a) => a.indexOf(v) === i);
+    return ticks.sort((a, b) => b - a);
+  })();
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap gap-4 text-xs">
+        {groups[0]?.values.map((v) => (
+          <span key={v.label} className="flex items-center gap-1.5 text-muted-foreground">
+            <span className="h-2.5 w-2.5 rounded-full" style={{ background: v.color }} />
+            {v.label}
+          </span>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        {/* Y axis */}
+        <div className="flex h-[168px] flex-col justify-between py-1 text-right font-mono text-[10px] tabular-nums text-muted-foreground">
+          {yTicks.map((t) => (
+            <span key={t} className="leading-none">
+              {t}
+            </span>
+          ))}
+        </div>
+        {/* Bars — vertical stacked, scroll horizontal jika banyak line, tidak memanjang ke bawah */}
+        <div className="scrollbar-theme flex flex-1 items-end gap-3 overflow-x-auto overflow-y-hidden pb-1">
+          {groups.map((g) => (
+            <div key={g.line} className="flex min-w-[52px] flex-col items-center gap-1.5">
+              <span className="font-mono text-xs font-semibold tabular-nums text-foreground">{g.total || ""}</span>
+              <div className="flex h-40 w-11 flex-col-reverse overflow-hidden rounded-t-md bg-surface-2">
+                {g.values.map((v) =>
+                  v.value > 0 ? (
+                    <div
+                      key={v.label}
+                      title={`${g.line} · ${v.label}: ${v.value}`}
+                      className="flex w-full items-center justify-center text-[10px] font-medium text-white transition-[height] duration-500 ease-[var(--ease-out-expo)]"
+                      style={{
+                        height: `${(v.value / max) * 100}%`,
+                        background: v.color,
+                        minHeight: v.value > 0 ? 6 : 0,
+                      }}
+                    >
+                      {(v.value / max) * 100 > 14 ? v.value : ""}
+                    </div>
+                  ) : null,
+                )}
+                {/* empty fill for shorter totals stays transparent top */}
+              </div>
+              <span className="max-w-[64px] truncate text-center text-xs font-medium text-muted-foreground" title={g.line}>
+                {g.line}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <p className="text-center font-mono text-[10px] text-muted-foreground">Quantity ↑ &nbsp;·&nbsp; X = Line</p>
     </div>
   );
 }
@@ -180,13 +255,34 @@ export function LineChart({
   series: Series[];
   height?: number;
 }) {
-  const width = Math.max(360, labels.length * 44);
   const max = Math.max(1, ...series.flatMap((s) => s.points));
+  const [hovered, setHovered] = useState<number | null>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [containerW, setContainerW] = useState<number | null>(null);
+
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    const update = () => setContainerW(el.clientWidth);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // 1D/7D harus memenuhi card, 14D pas tanpa scroll → lebar = lebar container (bento 3-kolom), bukan fixed 616
+  const width = containerW ?? (labels.length === 1 ? 360 : Math.max(360, labels.length * 44));
   const stepX = labels.length > 1 ? width / (labels.length - 1) : 0;
 
   function toPoints(points: number[]) {
-    return points.map((v, i) => [i * stepX, height - (v / max) * height] as const);
+    return points.map((v, i) => {
+      const x = labels.length === 1 ? width / 2 : i * stepX;
+      return [x, height - (v / max) * height] as const;
+    });
   }
+
+  const hoveredLabel = hovered !== null ? labels[hovered] : null;
+  const hoveredLeft = hovered !== null ? (labels.length === 1 ? width / 2 : hovered * stepX) : 0;
 
   return (
     <div className="flex flex-col gap-4">
@@ -198,8 +294,8 @@ export function LineChart({
           </span>
         ))}
       </div>
-      <div className="anim-fade overflow-x-auto">
-        <svg width={width} height={height + 24} className="min-w-full">
+      <div ref={wrapperRef} className="anim-fade relative w-full overflow-visible">
+        <svg width={width} height={height + 24} className="w-full" style={{ display: "block" }}>
           <defs>
             {series.map((s) => (
               <linearGradient key={s.label} id={`area-${s.label}`} x1="0" y1="0" x2="0" y2="1">
@@ -220,19 +316,101 @@ export function LineChart({
                 <path d={area} fill={`url(#area-${s.label})`} stroke="none" />
                 <path d={line} fill="none" stroke={s.color} strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round" />
                 {pts.map(([x, y], i) => (
-                  <circle key={i} cx={x} cy={y} r={3} fill="var(--surface)" stroke={s.color} strokeWidth={2}>
+                  <circle
+                    key={i}
+                    cx={x}
+                    cy={y}
+                    r={hovered === i ? 5 : 3}
+                    fill="var(--surface)"
+                    stroke={s.color}
+                    strokeWidth={2}
+                    className="transition-[r] duration-150"
+                  >
                     <title>{`${labels[i]} · ${s.label}: ${s.points[i]}`}</title>
                   </circle>
                 ))}
               </g>
             );
           })}
+          {hovered !== null && (
+            <line
+              x1={hoveredLeft}
+              x2={hoveredLeft}
+              y1={0}
+              y2={height}
+              stroke="var(--foreground)"
+              strokeOpacity={0.14}
+              strokeWidth={1}
+              strokeDasharray="4 4"
+            />
+          )}
+          {/* hit areas per index — fills full card: 1D single area, 7D/14D split evenly, no scroll */}
+          {labels.map((_, i) => {
+            const isSingle = labels.length === 1;
+            return (
+              <rect
+                key={`hit-${i}`}
+                x={isSingle ? 0 : i * stepX - stepX / 2}
+                y={0}
+                width={isSingle ? width : stepX}
+                height={height}
+                fill="transparent"
+                onMouseEnter={() => setHovered(i)}
+                onMouseLeave={() => setHovered(null)}
+              />
+            );
+          })}
           {labels.map((l, i) => (
-            <text key={l} x={i * stepX} y={height + 18} fontSize={10} textAnchor="middle" fill="var(--muted-foreground)">
+            <text
+              key={l}
+              x={labels.length === 1 ? width / 2 : i * stepX}
+              y={height + 18}
+              fontSize={10}
+              textAnchor="middle"
+              fill="var(--muted-foreground)"
+            >
               {l}
             </text>
           ))}
         </svg>
+        {/* Detail tooltip — same editorial-card glass, appears on hover */}
+        {hovered !== null && hoveredLabel !== null && (
+          <div
+            className="pointer-events-none absolute top-1 z-10 min-w-[148px] rounded-xl border bg-surface/95 px-3 py-2.5 shadow-xl backdrop-blur-md"
+            style={{
+              left: hoveredLeft,
+              transform:
+                labels.length === 1
+                  ? "translateX(-50%)"
+                  : hovered === 0
+                    ? "translateX(0%)"
+                    : hovered === labels.length - 1
+                      ? "translateX(-100%)"
+                      : "translateX(-50%)",
+              borderColor: "color-mix(in srgb, var(--border) 70%, transparent)",
+              boxShadow: "0 8px 24px -12px rgba(0,0,0,0.5), inset 0 1px 0 0 color-mix(in srgb, white 6%, transparent)",
+            }}
+          >
+            <p className="mb-1.5 font-mono text-xs font-medium text-foreground">{hoveredLabel}</p>
+            <div className="flex flex-col gap-1">
+              {series.map((s) => (
+                <div key={s.label} className="flex items-center justify-between gap-3 text-xs">
+                  <span className="flex items-center gap-1.5 text-muted-foreground">
+                    <span className="h-2 w-2 rounded-full" style={{ background: s.color }} />
+                    {s.label}
+                  </span>
+                  <span className="font-mono font-semibold tabular-nums text-foreground">{s.points[hovered]}</span>
+                </div>
+              ))}
+              <div className="mt-1 flex items-center justify-between gap-3 border-t border-border/60 pt-1.5 text-xs">
+                <span className="text-muted-foreground">Total</span>
+                <span className="font-mono font-semibold tabular-nums text-foreground">
+                  {series.reduce((sum, s) => sum + (s.points[hovered] ?? 0), 0)}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
