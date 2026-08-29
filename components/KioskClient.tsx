@@ -715,10 +715,8 @@ function Mascot({ src, place }: { src: string; place: string }) {
   return (
     // z-20 puts the hands in front of the card; pointer-events-none keeps the
     // keypad underneath fully clickable where a mascot overlaps it.
-    // 1400px and up only. The grid caps at max-w-6xl, so below that width the
-    // outer margin is thinner than the mascot's bleed and the right one gets
-    // clipped by the viewport — measured, not guessed.
-    <div className={`pointer-events-none absolute z-20 hidden min-[1400px]:block ${place}`}>
+    // lg (1024px) and up — grid caps at max-w-6xl, 1400px sebelumnya terlalu sempit di laptop 13-14".
+    <div className={`pointer-events-none absolute z-20 hidden lg:block ${place}`}>
       <Image
         data-mascot
         src={src}
