@@ -2,7 +2,7 @@ import type { ShiftConfigRow } from "./queries";
 
 /**
  * Menentukan shift berjalan dari jam sekarang (WIB), termasuk shift yang
- * melewati tengah malam (mis. shift 3: 22:00–06:00).
+ * melewati tengah malam (mis. Night: 18:00–06:00).
  */
 export function computeCurrentShift(shifts: ShiftConfigRow[], now: Date = new Date()): string {
   const hhmm = new Intl.DateTimeFormat("en-GB", {
@@ -22,5 +22,5 @@ export function computeCurrentShift(shifts: ShiftConfigRow[], now: Date = new Da
 
   // ponytail: shift_config kosong/tidak menutup 24 jam — fallback ke shift pertama
   // agar absen tetap tercatat daripada gagal total.
-  return shifts[0]?.shift ?? "1";
+  return shifts[0]?.shift ?? "Day";
 }

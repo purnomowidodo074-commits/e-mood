@@ -281,7 +281,7 @@ export function KioskClient() {
   }
 
   return (
-    <div className="relative flex h-screen flex-col overflow-hidden bg-background text-center">
+    <div className="relative flex min-h-[100dvh] min-h-screen flex-col overflow-x-hidden bg-background text-center">
       <AppBackground />
 
       {/* Navbar */}
@@ -316,14 +316,14 @@ export function KioskClient() {
         }}
       />
 
-      <div className="relative flex flex-1 flex-col items-center justify-center gap-6 px-6 py-6">
+      <div className="relative flex flex-1 flex-col items-center gap-6 overflow-y-auto px-6 py-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] lg:justify-center lg:overflow-visible lg:py-5 lg:pb-5">
 
       {stage === "scan" && (
         <div
           key="scan"
-          className="anim-fade-up relative grid w-full max-w-5xl grid-cols-1 items-center gap-6 text-center lg:grid-cols-[1.1fr_1fr] lg:text-left"
+          className="anim-fade-up relative grid w-full max-w-6xl -translate-y-2 grid-cols-1 items-center gap-6 text-center lg:-translate-y-4 lg:grid-cols-[1.1fr_1fr] lg:text-left"
         >
-          {/* Headline — the attention-grabbing description */}
+          {/* Hero — the attention-grabbing description */}
           <div className="flex flex-col items-center gap-5 lg:items-start">
             <EmojiCycleBadge />
             <TypewriterHeadline />
@@ -333,7 +333,8 @@ export function KioskClient() {
             </p>
           </div>
 
-          {/* Scan card */}
+          {/* Scan card — the two mascots flank it from either side */}
+          <MascotStage>
           <div className="flex flex-col items-center gap-3 rounded-3xl border border-border bg-surface/70 p-5 shadow-2xl backdrop-blur-md">
             <LiveClock />
             <div className="flex gap-1 rounded-full border border-border bg-surface-2 p-1">
@@ -400,6 +401,7 @@ export function KioskClient() {
             )}
             <PrivacyNotice />
           </div>
+          </MascotStage>
         </div>
       )}
 
@@ -558,9 +560,6 @@ function ResultIcon({ category }: { category: Category }) {
   );
 }
 
-// The e-Mood mark, alive: cycles happy → netral → badmood on a loop.
-// Plain GSAP timeline (no plugin needed for a 3-item crossfade) — transform +
-// opacity only, static on the first frame when prefers-reduced-motion is set.
 const HEADLINE_TEXT = "Bagaimana perasaan\nAnda hari ini?";
 
 // Typewriter reveal: types the headline in one continuous pass (GSAP tweens a
@@ -585,7 +584,9 @@ function TypewriterHeadline() {
   }, []);
 
   return (
-    <h1 className="text-5xl font-extrabold leading-[1.05] tracking-tight text-foreground sm:text-6xl">
+    // Capped a step below the original 6xl: at 6xl the first line runs into the
+    // left mascot standing beside the card.
+    <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight text-foreground sm:text-5xl">
       {shown.split("\n").map((line, i) => (
         <span key={i}>
           {i > 0 && <br />}
@@ -625,6 +626,15 @@ function LiveClock() {
   );
 }
 
+// Two mascot cutouts flank the scan card, positioned so their hands overlap
+// its edges — the card reads as being held up between them.
+//
+// Alignment is asset-specific: every render puts the hands somewhere slightly
+// different, so all the placement numbers live here as knobs instead of being
+// buried in the JSX. Nudge these after dropping new artwork into /public.
+// The e-Mood mark, alive: cycles happy → netral → badmood on a loop.
+// Plain GSAP timeline (no plugin needed for a 3-item crossfade) — transform +
+// opacity only, static on the first frame when prefers-reduced-motion is set.
 function EmojiCycleBadge() {
   const emojiRef = useRef<HTMLSpanElement>(null);
 
@@ -650,6 +660,76 @@ function EmojiCycleBadge() {
     <span ref={emojiRef} className="inline-block text-7xl leading-none drop-shadow-lg">
       {CYCLE_EMOJI[0]}
     </span>
+  );
+}
+
+// Both cutouts point *inward*, and their hands sit at the inner edge of the
+// artwork — so each one only needs to overlap the card by the last ~20% of its
+// width for the fingers to land on the card's edge. Overlap much more than
+// that and the body starts covering the keypad.
+//
+// Sized to fit the right-hand column of the hero grid: the left mascot has to
+// clear the headline column beside it, which caps how wide these can get.
+const MASCOTS = [
+  { src: "/mascot-left.png", place: "left-0 -translate-x-[50%] bottom-[6%] -rotate-3" },
+  { src: "/mascot-right.png", place: "right-0 translate-x-[50%] bottom-[2%] rotate-2" },
+];
+const MASCOT_WIDTH = "w-[clamp(165px,15vw,248px)]";
+
+function MascotStage({ children }: { children: React.ReactNode }) {
+  const scope = useRef<HTMLDivElement>(null);
+
+  useGSAP(
+    () => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      // The whole rig breathes as one object — card and mascots together, so
+      // the lift never reads as three things drifting independently. The
+      // mascots then get a slower offset bob on top for a bit of life.
+      gsap.to(scope.current, { y: -8, duration: 2.8, repeat: -1, yoyo: true, ease: "sine.inOut" });
+      gsap.to(scope.current?.querySelectorAll("[data-mascot]") ?? [], {
+        y: -5,
+        duration: 2.2,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut",
+        stagger: 0.5,
+      });
+    },
+    { scope }
+  );
+
+  return (
+    <div ref={scope} className="relative flex items-center justify-center">
+      {MASCOTS.map((m) => (
+        <Mascot key={m.src} {...m} />
+      ))}
+      <div className="relative z-10">{children}</div>
+    </div>
+  );
+}
+
+function Mascot({ src, place }: { src: string; place: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return null; // artwork not dropped in yet — card still works alone
+
+  return (
+    // z-20 puts the hands in front of the card; pointer-events-none keeps the
+    // keypad underneath fully clickable where a mascot overlaps it.
+    // 1400px and up only. The grid caps at max-w-6xl, so below that width the
+    // outer margin is thinner than the mascot's bleed and the right one gets
+    // clipped by the viewport — measured, not guessed.
+    <div className={`pointer-events-none absolute z-20 hidden min-[1400px]:block ${place}`}>
+      <Image
+        data-mascot
+        src={src}
+        alt=""
+        width={640}
+        height={860}
+        priority
+        onError={() => setFailed(true)}
+        className={`${MASCOT_WIDTH} h-auto select-none drop-shadow-2xl`}
+      />
+    </div>
   );
 }
 

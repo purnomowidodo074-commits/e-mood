@@ -204,6 +204,7 @@ body {
   grid-template-columns: repeat(6, minmax(0, 1fr));
   grid-template-areas:
     "stat stat stat donut donut donut"
+    "trend trend trend line line line"
     "table table table table scatter scatter";
 }
 
@@ -220,7 +221,7 @@ body {
 @media (max-width: 767px) {
   .bento-leader {
     grid-template-columns: 1fr;
-    grid-template-areas: "stat" "donut" "table" "scatter";
+    grid-template-areas: "stat" "donut" "trend" "line" "table" "scatter";
   }
   .bento-section {
     grid-template-columns: 1fr;
@@ -234,6 +235,7 @@ body {
 .area-scatter { grid-area: scatter; }
 .area-trend { grid-area: trend; }
 .area-shift { grid-area: shift; }
+.area-line { grid-area: line; }
 
 /* Dashboard editorial serif for headings — the Fraunces variable is set on
    the dashboard's <main> (app/dashboard/layout.tsx), so this cascades there

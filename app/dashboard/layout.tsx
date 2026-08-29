@@ -18,11 +18,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const user = await requireUser();
 
   return (
-    <div className="relative flex min-h-full flex-col overflow-hidden">
+    <div className="relative flex min-h-[100dvh] min-h-full flex-col overflow-x-hidden">
       <AppBackground />
       <AppNav name={user.name} role={user.role} />
       <main
-        className={`${editorialSerif.variable} relative mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6`}
+        className={`${editorialSerif.variable} relative mx-auto w-full max-w-7xl flex-1 px-4 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-6`}
       >
         {children}
       </main>

@@ -20,6 +20,7 @@ export type MoodRecordRow = {
   source: "auto" | "manual";
   followed_up: boolean;
   followup_note: string | null;
+  line: string | null;
 };
 
 export type MoodSummary = {
@@ -58,12 +59,14 @@ export async function getMoodSummary(date: string, shift?: string): Promise<Mood
 /** Tabel detail per-member (FR-5.5), untuk Leader. */
 export async function getMoodRecords(date: string, shift?: string): Promise<MoodRecordRow[]> {
   const rows = await sql`
-    select id, noreg, nama, recorded_at, shift, category, confidence,
-           low_confidence, source, followed_up, followup_note
-    from mood_records
-    where (recorded_at at time zone 'Asia/Jakarta')::date = ${date}::date
-      and (${shift ?? null}::text is null or shift = ${shift ?? null})
-    order by recorded_at desc
+    select r.id, r.noreg, r.nama, r.recorded_at, r.shift, r.category, r.confidence,
+           r.low_confidence, r.source, r.followed_up, r.followup_note,
+           m.line as line
+    from mood_records r
+    left join members m on m.id = r.member_id
+    where (r.recorded_at at time zone 'Asia/Jakarta')::date = ${date}::date
+      and (${shift ?? null}::text is null or r.shift = ${shift ?? null})
+    order by r.recorded_at desc
   `;
   return rows as MoodRecordRow[];
 }
@@ -107,6 +110,20 @@ export async function getShiftComparison(startDate: string, endDate: string) {
     order by shift
   `;
   return rows as { shift: string; category: Category; count: number }[];
+}
+
+/** Perbandingan per Line (Y = nama line, X = quantity) — stacked Happy/Netral/Badmood. */
+export async function getLineComparison(startDate: string, endDate: string, shift?: string) {
+  const rows = await sql`
+    select coalesce(nullif(trim(m.line), ''), 'Tanpa Line') as line, r.category, count(*)::int as count
+    from mood_records r
+    left join members m on m.id = r.member_id
+    where (r.recorded_at at time zone 'Asia/Jakarta')::date between ${startDate}::date and ${endDate}::date
+      and (${shift ?? null}::text is null or r.shift = ${shift ?? null})
+    group by line, r.category
+    order by line
+  `;
+  return rows as { line: string; category: Category; count: number }[];
 }
 
 // ---- Kiosk (FR-1, FR-3, FR-4 — no auth, identification is by Noreg only) ----
@@ -292,7 +309,10 @@ export async function setConfidenceThreshold(value: number) {
 export type ShiftConfigRow = { shift: string; start_time: string; end_time: string };
 
 export async function listShiftConfig(): Promise<ShiftConfigRow[]> {
-  const rows = await sql`select shift, start_time, end_time from shift_config order by shift`;
+  const rows = await sql`
+    select shift, start_time, end_time from shift_config
+    order by case shift when 'Day' then 0 when 'Night' then 1 else 2 end, shift
+  `;
   return rows as ShiftConfigRow[];
 }
 
