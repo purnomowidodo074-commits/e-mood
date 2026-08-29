@@ -85,11 +85,12 @@ export async function getUnrecordedMembers(date: string) {
 }
 
 /** Tren harian per kategori dalam rentang tanggal (FR-5.4), untuk Section Head — agregat saja. */
-export async function getDailyTrend(startDate: string, endDate: string) {
+export async function getDailyTrend(startDate: string, endDate: string, shift?: string) {
   const rows = await sql`
-    select (recorded_at at time zone 'Asia/Jakarta')::date as day, category, count(*)::int as count
+    select ((recorded_at at time zone 'Asia/Jakarta')::date)::text as day, category, count(*)::int as count
     from mood_records
     where (recorded_at at time zone 'Asia/Jakarta')::date between ${startDate}::date and ${endDate}::date
+      and (${shift ?? null}::text is null or shift = ${shift ?? null})
     group by day, category
     order by day
   `;
@@ -233,13 +234,14 @@ export type Member = {
   id: string;
   noreg: string;
   nama: string;
+  line: string | null;
   is_active: boolean;
   created_at: string;
 };
 
 export async function listMembers(search?: string): Promise<Member[]> {
   const rows = await sql`
-    select id, noreg, nama, is_active, created_at
+    select id, noreg, nama, line, is_active, created_at
     from members
     where ${search ?? null}::text is null
        or nama ilike '%' || ${search ?? null} || '%'
@@ -249,12 +251,12 @@ export async function listMembers(search?: string): Promise<Member[]> {
   return rows as Member[];
 }
 
-export async function createMember(noreg: string, nama: string) {
-  await sql`insert into members (noreg, nama) values (${normalizeNoreg(noreg)}, ${nama})`;
+export async function createMember(noreg: string, nama: string, line: string) {
+  await sql`insert into members (noreg, nama, line) values (${normalizeNoreg(noreg)}, ${nama}, ${line || null})`;
 }
 
-export async function updateMember(id: string, noreg: string, nama: string) {
-  await sql`update members set noreg = ${normalizeNoreg(noreg)}, nama = ${nama} where id = ${id}::uuid`;
+export async function updateMember(id: string, noreg: string, nama: string, line: string) {
+  await sql`update members set noreg = ${normalizeNoreg(noreg)}, nama = ${nama}, line = ${line || null} where id = ${id}::uuid`;
 }
 
 export async function setMemberActive(id: string, isActive: boolean) {

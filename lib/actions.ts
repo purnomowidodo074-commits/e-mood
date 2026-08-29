@@ -52,8 +52,9 @@ export async function createMemberAction(formData: FormData) {
   await requireUser(["admin"]);
   const noreg = String(formData.get("noreg") ?? "").trim();
   const nama = String(formData.get("nama") ?? "").trim();
+  const line = String(formData.get("line") ?? "").trim().toUpperCase();
   if (!noreg || !nama) return;
-  await q.createMember(noreg, nama);
+  await q.createMember(noreg, nama, line);
   revalidatePath("/admin/members");
 }
 
@@ -62,8 +63,9 @@ export async function updateMemberAction(formData: FormData) {
   const id = String(formData.get("id"));
   const noreg = String(formData.get("noreg") ?? "").trim();
   const nama = String(formData.get("nama") ?? "").trim();
+  const line = String(formData.get("line") ?? "").trim().toUpperCase();
   if (!noreg || !nama) return;
-  await q.updateMember(id, noreg, nama);
+  await q.updateMember(id, noreg, nama, line);
   revalidatePath("/admin/members");
 }
 

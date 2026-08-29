@@ -56,6 +56,13 @@ export default async function MembersPage(props: PageProps<"/admin/members">) {
               className="block w-64 rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-primary"
             />
           </label>
+          <label className="text-xs font-medium text-muted-foreground">
+            <span className="mb-1 block">Line</span>
+            <input
+              name="line"
+              className="block w-40 rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm uppercase text-foreground outline-none transition-colors focus:border-primary"
+            />
+          </label>
           <button
             type="submit"
             className="cursor-pointer rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-transform duration-[var(--dur-fast)] hover:brightness-110 active:scale-95"
@@ -71,6 +78,7 @@ export default async function MembersPage(props: PageProps<"/admin/members">) {
             <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
               <th className="px-5 py-3 font-medium">Noreg</th>
               <th className="px-5 py-3 font-medium">Nama</th>
+              <th className="px-5 py-3 font-medium">Line</th>
               <th className="px-5 py-3 font-medium">Status</th>
               <th className="px-5 py-3" />
             </tr>
@@ -83,6 +91,7 @@ export default async function MembersPage(props: PageProps<"/admin/members">) {
               >
                 <td className="px-5 py-3 font-mono text-muted-foreground">{m.noreg}</td>
                 <td className="px-5 py-3 text-foreground/90">{m.nama}</td>
+                <td className="px-5 py-3 text-foreground/90">{m.line ?? "—"}</td>
                 <td className="px-5 py-3">
                   <span
                     className={`rounded-full px-2.5 py-1 text-xs font-medium ${
@@ -117,6 +126,14 @@ export default async function MembersPage(props: PageProps<"/admin/members">) {
                             name="nama"
                             defaultValue={m.nama}
                             className="mt-1 block w-full rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm text-foreground outline-none focus:border-primary"
+                          />
+                        </label>
+                        <label className="text-xs text-muted-foreground">
+                          Line
+                          <input
+                            name="line"
+                            defaultValue={m.line ?? ""}
+                            className="mt-1 block w-full rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm uppercase text-foreground outline-none focus:border-primary"
                           />
                         </label>
                         <button

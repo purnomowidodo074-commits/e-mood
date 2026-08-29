@@ -13,6 +13,7 @@ create table members (
   -- lihat normalizeNoreg() di lib/queries.ts, satu-satunya tempat noreg ditulis
   noreg         text unique not null,
   nama          text not null,
+  line          text,
   is_active     boolean not null default true,
   created_at    timestamptz not null default now()
 );
@@ -84,11 +85,10 @@ insert into emotion_mapping (emotion, category) values
   ('disgust', 'BADMOOD'),
   ('fear', 'BADMOOD');
 
--- seed shift_config (default, bisa diubah lewat admin FR-6.6)
+-- seed shift_config (default, bisa diubah lewat admin FR-6.6) — Day / Night only
 insert into shift_config (shift, start_time, end_time) values
-  ('1', '06:00', '14:00'),
-  ('2', '14:00', '22:00'),
-  ('3', '22:00', '06:00');
+  ('Day', '06:00', '18:00'),
+  ('Night', '18:00', '06:00');
 
 -- seed app_config
 insert into app_config (key, value) values
