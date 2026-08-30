@@ -100,6 +100,19 @@ export async function getDailyTrend(startDate: string, endDate: string, shift?: 
   return rows as { day: string; category: Category; count: number }[];
 }
 
+/** Tren per jam absensi untuk satu hari (dipakai saat filter tren = 1D) — X = jam. */
+export async function getHourlyTrend(date: string, shift?: string) {
+  const rows = await sql`
+    select extract(hour from (recorded_at at time zone 'Asia/Jakarta'))::int as hour, category, count(*)::int as count
+    from mood_records
+    where (recorded_at at time zone 'Asia/Jakarta')::date = ${date}::date
+      and (${shift ?? null}::text is null or shift = ${shift ?? null})
+    group by hour, category
+    order by hour
+  `;
+  return rows as { hour: number; category: Category; count: number }[];
+}
+
 /** Perbandingan antar shift dalam rentang tanggal (FR-5.3/US-16), agregat saja. */
 export async function getShiftComparison(startDate: string, endDate: string) {
   const rows = await sql`

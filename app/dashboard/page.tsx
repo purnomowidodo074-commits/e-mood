@@ -4,6 +4,7 @@ import {
   getMoodSummary,
   getMoodRecords,
   getDailyTrend,
+  getHourlyTrend,
   getShiftComparison,
   getLineComparison,
   type Category,
@@ -19,6 +20,28 @@ import Link from "next/link";
 const CATEGORIES: Category[] = ["HAPPY", "NETRAL", "BADMOOD"];
 const SHIFTS = ["Day", "Night"];
 const CATEGORY_ICON = { HAPPY: IconFaceHappy, NETRAL: IconFaceNeutral, BADMOOD: IconFaceSad };
+
+/** Filter tren 1D → sumbu-x = jam absensi (HH:00) alih-alih tanggal. */
+function hourlyTrendChart(hourly: { hour: number; category: Category; count: number }[]) {
+  const hs = hourly.map((r) => r.hour);
+  let lo = hs.length ? Math.min(...hs) : 6;
+  let hi = hs.length ? Math.max(...hs) : 9;
+  // data sedikit → lebarkan rentang jam sampai minimal 4 titik (0–23)
+  while (hi - lo + 1 < 4) {
+    if (hi < 23) hi++;
+    else if (lo > 0) lo--;
+    else break;
+  }
+  const hourList = Array.from({ length: hi - lo + 1 }, (_, i) => lo + i);
+  return {
+    labels: hourList.map((h) => `${String(h).padStart(2, "0")}:00`),
+    series: CATEGORIES.map((c) => ({
+      label: CATEGORY_LABEL[c],
+      color: CATEGORY_COLOR[c],
+      points: hourList.map((h) => hourly.find((r) => r.hour === h && r.category === c)?.count ?? 0),
+    })),
+  };
+}
 
 export default async function DashboardPage(props: PageProps<"/dashboard">) {
   const user = await requireUser();
@@ -56,11 +79,12 @@ export async function LeaderView({
   const trendStartDate = isoDateMinusDays(trendEndDate, trendDays - 1);
   const trendDayList = daysRange(trendEndDate, trendDays);
 
-  const [summary, records, trend, lineComparison] = await Promise.all([
+  const [summary, records, trend, lineComparison, hourly] = await Promise.all([
     getMoodSummary(date, shift),
     getMoodRecords(date, shift),
     getDailyTrend(trendStartDate, trendEndDate, shift),
     getLineComparison(trendStartDate, trendEndDate, shift),
+    trendDays === 1 ? getHourlyTrend(date, shift) : Promise.resolve([]),
   ]);
 
   const segments = CATEGORIES.map((c) => ({
@@ -204,7 +228,11 @@ export async function LeaderView({
             <h2 className="text-sm font-semibold text-foreground">Tren Harian</h2>
             <TrendTabs date={date} shift={shift} active={trendDays} />
           </div>
-          <LineChart labels={trendDayList.map(formatDayLabel)} series={trendSeries} />
+          {trendDays === 1 ? (
+            <LineChart {...hourlyTrendChart(hourly)} />
+          ) : (
+            <LineChart labels={trendDayList.map(formatDayLabel)} series={trendSeries} />
+          )}
           <p className="mt-3 font-mono text-xs text-muted-foreground">
             {trendDays === 1
               ? formatDateID(trendEndDate)
@@ -548,9 +576,10 @@ async function SectionHeadView({
   const startDate = isoDateMinusDays(endDate, trendDays - 1);
   const dayList = daysRange(endDate, trendDays);
 
-  const [trend, shiftComparison] = await Promise.all([
+  const [trend, shiftComparison, hourly] = await Promise.all([
     getDailyTrend(startDate, endDate),
     getShiftComparison(startDate, endDate),
+    trendDays === 1 ? getHourlyTrend(endDate) : Promise.resolve([]),
   ]);
 
   const trendSeries = CATEGORIES.map((c) => ({
@@ -615,7 +644,11 @@ async function SectionHeadView({
 
         <section className="area-trend editorial-card anim-fade-up p-6">
           <h2 className="mb-4 text-sm font-semibold text-foreground">Tren Harian per Kategori</h2>
-          <LineChart labels={dayList.map(formatDayLabel)} series={trendSeries} />
+          {trendDays === 1 ? (
+            <LineChart {...hourlyTrendChart(hourly)} />
+          ) : (
+            <LineChart labels={dayList.map(formatDayLabel)} series={trendSeries} />
+          )}
         </section>
 
         <section className="area-shift editorial-card anim-fade-up p-6">

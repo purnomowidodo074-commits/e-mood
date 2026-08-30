@@ -270,8 +270,16 @@ export function LineChart({
     return () => ro.disconnect();
   }, []);
 
+  // sumbu-y kiri: 5 label quantity dari max (atas) ke 0 (bawah), sejajar gridline 0.25/0.5/0.75/1
+  const axisW = 40;
+  const yTicks = [...new Set([max, Math.round(max * 0.75), Math.round(max * 0.5), Math.round(max * 0.25), 0])];
+
   // 1D/7D harus memenuhi card, 14D pas tanpa scroll → lebar = lebar container (bento 3-kolom), bukan fixed 616
-  const width = containerW ?? (labels.length === 1 ? 360 : Math.max(360, labels.length * 44));
+  const width = containerW
+    ? Math.max(160, containerW - axisW)
+    : labels.length === 1
+      ? 360
+      : Math.max(360, labels.length * 44);
   const stepX = labels.length > 1 ? width / (labels.length - 1) : 0;
 
   function toPoints(points: number[]) {
@@ -294,8 +302,18 @@ export function LineChart({
           </span>
         ))}
       </div>
-      <div ref={wrapperRef} className="anim-fade relative w-full overflow-visible">
-        <svg width={width} height={height + 24} className="w-full" style={{ display: "block" }}>
+      <div ref={wrapperRef} className="anim-fade relative flex w-full gap-2 overflow-visible">
+        <div
+          className="flex shrink-0 flex-col justify-between text-right font-mono text-[10px] tabular-nums text-muted-foreground"
+          style={{ width: axisW - 8, height }}
+        >
+          {yTicks.map((t) => (
+            <span key={t} className="leading-none">
+              {t}
+            </span>
+          ))}
+        </div>
+        <svg width={width} height={height + 24} className="min-w-0 flex-1" style={{ display: "block" }}>
           <defs>
             {series.map((s) => (
               <linearGradient key={s.label} id={`area-${s.label}`} x1="0" y1="0" x2="0" y2="1">
@@ -366,7 +384,7 @@ export function LineChart({
               x={labels.length === 1 ? width / 2 : i * stepX}
               y={height + 18}
               fontSize={10}
-              textAnchor="middle"
+              textAnchor={labels.length > 1 && i === 0 ? "start" : labels.length > 1 && i === labels.length - 1 ? "end" : "middle"}
               fill="var(--muted-foreground)"
             >
               {l}
@@ -378,7 +396,7 @@ export function LineChart({
           <div
             className="pointer-events-none absolute top-1 z-10 min-w-[148px] rounded-xl border bg-surface/95 px-3 py-2.5 shadow-xl backdrop-blur-md"
             style={{
-              left: hoveredLeft,
+              left: hoveredLeft + axisW,
               transform:
                 labels.length === 1
                   ? "translateX(-50%)"
