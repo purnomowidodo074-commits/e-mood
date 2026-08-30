@@ -286,6 +286,9 @@ export function KioskClient() {
 
       {/* Navbar */}
       <header className="relative z-10 flex items-center justify-between px-6 py-4">
+        <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <Image src="/happiness.png" alt="Happiness" width={1024} height={764} className="h-32 w-auto object-contain" priority />
+        </div>
         <Image src="/logo.png" alt="Toyota" width={140} height={40} className="h-10 w-auto object-contain" priority />
         <div className="flex items-center gap-2">
           <Link

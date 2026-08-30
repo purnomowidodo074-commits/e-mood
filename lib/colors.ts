@@ -23,3 +23,10 @@ export const CATEGORY_LABEL: Record<Category, string> = {
   NETRAL: "Netral",
   BADMOOD: "Badmood",
 };
+
+// Emoji yang sama dengan layar konfirmasi absen di kiosk (KioskClient CATEGORY_META).
+export const CATEGORY_EMOJI: Record<Category, string> = {
+  HAPPY: "🙂",
+  NETRAL: "😐",
+  BADMOOD: "😕",
+};

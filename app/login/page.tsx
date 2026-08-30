@@ -66,9 +66,14 @@ export default function LoginPage() {
 
       <div className="relative flex flex-1 items-center justify-center px-4">
         <div className="anim-fade-up relative w-full max-w-sm rounded-2xl border border-border bg-surface/90 p-8 shadow-2xl backdrop-blur-sm">
-          <span className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-secondary text-sm font-bold text-primary-foreground shadow-[0_0_24px_-6px_var(--primary)]">
-            H
-          </span>
+          <Image
+            src="/happiness.png"
+            alt="Happiness"
+            width={1024}
+            height={764}
+            className="-mb-2 h-28 w-auto object-contain"
+            priority
+          />
           <h1 className="text-xl font-semibold tracking-tight text-foreground">Masuk ke Happiness</h1>
           <p className="mt-1 text-sm text-muted-foreground">Akses dashboard dan admin absen emosi.</p>
 

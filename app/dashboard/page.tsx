@@ -11,7 +11,7 @@ import {
   type MoodRecordRow,
 } from "@/lib/queries";
 import { todayISO, isoDaysAgo, formatDateID, formatTimeID, formatDayLabel, isoDateMinusDays, daysRange } from "@/lib/date";
-import { CATEGORY_COLOR, CATEGORY_BG, CATEGORY_LABEL } from "@/lib/colors";
+import { CATEGORY_COLOR, CATEGORY_BG, CATEGORY_LABEL, CATEGORY_EMOJI } from "@/lib/colors";
 import { DonutChart, BarChart, LineChart, ScatterChart, type HorizontalStackGroup } from "@/components/Charts";
 import { followUpAction, resetMoodRecordsPublicAction } from "@/lib/actions";
 import { IconFaceHappy, IconFaceNeutral, IconFaceSad } from "@/components/icons";
@@ -174,7 +174,7 @@ export async function LeaderView({
           pctLabel={`${pctHappy}% dari absen`}
           accent={CATEGORY_COLOR.HAPPY}
           barBg={CATEGORY_BG.HAPPY}
-          icon={IconFaceHappy}
+          emoji={CATEGORY_EMOJI.HAPPY}
         />
         <KpiCard
           label="Netral"
@@ -183,7 +183,7 @@ export async function LeaderView({
           pctLabel={`${pctNetral}% dari absen`}
           accent={CATEGORY_COLOR.NETRAL}
           barBg={CATEGORY_BG.NETRAL}
-          icon={IconFaceNeutral}
+          emoji={CATEGORY_EMOJI.NETRAL}
         />
         <KpiCard
           label="Badmood"
@@ -192,7 +192,7 @@ export async function LeaderView({
           pctLabel={`${pctBadmood}% dari absen`}
           accent={CATEGORY_COLOR.BADMOOD}
           barBg={CATEGORY_BG.BADMOOD}
-          icon={IconFaceSad}
+          emoji={CATEGORY_EMOJI.BADMOOD}
         />
       </div>
 
@@ -286,7 +286,7 @@ function KpiCard({
   pctLabel,
   accent,
   barBg,
-  icon: Icon,
+  emoji,
 }: {
   label: string;
   value: number;
@@ -295,18 +295,18 @@ function KpiCard({
   pctLabel: string;
   accent: string;
   barBg: string;
-  icon?: React.ComponentType<{ className?: string }>;
+  emoji?: string;
 }) {
   return (
     <div className="editorial-card anim-fade-up flex flex-col gap-3 p-5">
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</h3>
-        {Icon ? (
+        {emoji ? (
           <span
-            className="inline-flex h-7 w-7 items-center justify-center rounded-full"
-            style={{ background: barBg, color: accent }}
+            className="anim-scale-in inline-flex h-8 w-8 items-center justify-center rounded-full text-lg leading-none"
+            style={{ background: barBg }}
           >
-            <Icon className="h-4 w-4" />
+            {emoji}
           </span>
         ) : (
           <span className="h-1.5 w-7 rounded-full" style={{ background: accent }} aria-hidden />

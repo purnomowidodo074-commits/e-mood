@@ -31,7 +31,17 @@ export function AppNav({ name, role }: { name: string; role: Role }) {
 
   return (
     <header className="sticky top-0 z-20 border-b border-border/80 bg-surface/85 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
+      <div className="relative mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
+        <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <Image
+            src="/happiness.png"
+            alt="Happiness"
+            width={1024}
+            height={764}
+            className="h-28 w-auto object-contain"
+            priority
+          />
+        </div>
         <div className="flex items-center gap-8">
           <Link href="/dashboard" className="flex items-center gap-3">
             <Image src="/logo.png" alt="Toyota" width={100} height={28} className="h-7 w-auto object-contain" priority />
