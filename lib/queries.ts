@@ -153,13 +153,13 @@ export async function findMemberByNoreg(noreg: string): Promise<KioskMember | nu
 /** FR-1.5: menolak absen ganda di shift yang sama (hari WIB berjalan). */
 export async function findExistingRecordToday(memberId: string, shift: string) {
   const rows = await sql`
-    select recorded_at from mood_records
+    select id, recorded_at, device_id from mood_records
     where member_id = ${memberId}::uuid
       and shift = ${shift}
       and (recorded_at at time zone 'Asia/Jakarta')::date = (now() at time zone 'Asia/Jakarta')::date
     limit 1
   `;
-  return (rows[0] as { recorded_at: string } | undefined) ?? null;
+  return (rows[0] as { id: string; recorded_at: string; device_id: string | null } | undefined) ?? null;
 }
 
 export type RawEmotionScores = Record<
@@ -213,7 +213,8 @@ async function insertRecord(
   rawScores: unknown,
   source: "auto" | "manual",
   framesUsed: number | null,
-  deviceId: string
+  deviceId: string,
+  retriedFromMock = false
 ): Promise<KioskResult> {
   try {
     await sql`
@@ -228,6 +229,13 @@ async function insertRecord(
     // 23505 = unique_violation (sudah absen shift ini hari ini — race dengan cek awal)
     if (err instanceof Error && "code" in err && (err as { code?: string }).code === "23505") {
       const existing = await findExistingRecordToday(member.id, shift);
+      // Absen kamera asli menggantikan data demo: kalau record yang menghalangi
+      // adalah baris mock, hapus lalu insert ulang sekali (retriedFromMock guard
+      // mencegah loop kalau ada race).
+      if (!retriedFromMock && existing && existing.device_id === MOCK_DEVICE_ID) {
+        await sql`delete from mood_records where id = ${existing.id}::uuid`;
+        return insertRecord(member, shift, category, confidence, lowConfidence, rawScores, source, framesUsed, deviceId, true);
+      }
       return { status: "duplicate", existingTime: existing?.recorded_at };
     }
     throw err;
