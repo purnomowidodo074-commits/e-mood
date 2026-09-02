@@ -59,9 +59,16 @@ export function MockDataForm({
             <input type="date" name="endDate" defaultValue={defaultEnd} required className={field} />
           </label>
           <label className={labelCls}>
-            <span className="mb-1 block">Target kehadiran (% member aktif)</span>
-            <input type="number" name="targetPct" defaultValue={85} min={0} max={100} required className={field} />
+            <span className="mb-1 block">Kehadiran min (% member aktif)</span>
+            <input type="number" name="targetMin" defaultValue={75} min={0} max={100} required className={field} />
           </label>
+          <label className={labelCls}>
+            <span className="mb-1 block">Kehadiran max (%)</span>
+            <input type="number" name="targetMax" defaultValue={95} min={0} max={100} required className={field} />
+          </label>
+          <p className="text-xs text-muted-foreground sm:col-span-2 lg:col-span-3">
+            Tiap hari &amp; shift ambil % acak sendiri di rentang ini — kehadiran jadi variatif. Samakan min = max untuk nilai tetap.
+          </p>
 
           <label className={labelCls}>
             <span className="mb-1 block">Jam absen Day — dari</span>
@@ -158,7 +165,7 @@ export function MockDataForm({
         )}
         {state.inserted != null && !state.error && (
           <p className="anim-fade rounded-lg bg-happy-bg px-3 py-2 text-sm text-happy">
-            {state.inserted} record dibuat ({state.days} hari × 2 shift, target {state.perShift}/shift).{" "}
+            {state.inserted} record dibuat ({state.days} hari × 2 shift, target {state.targetMin}–{state.targetMax}%).{" "}
             {state.existing ? `${state.existing} record sudah ada sebelumnya, dilewati.` : ""}
           </p>
         )}

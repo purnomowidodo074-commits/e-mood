@@ -6,7 +6,8 @@ export type MoodCategory = "HAPPY" | "NETRAL" | "BADMOOD";
 export type MockParams = {
   startDate: string; // YYYY-MM-DD (Asia/Jakarta calendar day)
   endDate: string;
-  targetPct: number; // 0..100 of active members, per shift
+  targetMin: number; // 0..100 of active members; each day+shift draws a random % in [min,max]
+  targetMax: number;
   dayFrom: string; // "HH:MM"
   dayTo: string;
   nightFrom: string;
@@ -25,7 +26,8 @@ export function parseMockParams(get: (k: string) => string): MockParams {
   return {
     startDate: get("startDate"),
     endDate: get("endDate"),
-    targetPct: Number(get("targetPct")),
+    targetMin: Number(get("targetMin")),
+    targetMax: Number(get("targetMax")),
     dayFrom: get("dayFrom"),
     dayTo: get("dayTo"),
     nightFrom: get("nightFrom"),
@@ -46,7 +48,8 @@ export function validateMockParams(p: MockParams): string | null {
   if (p.startDate > p.endDate) return "Tanggal mulai setelah tanggal selesai.";
   if (eachDate(p.startDate, p.endDate).length > MAX_RANGE_DAYS)
     return `Rentang maksimal ${MAX_RANGE_DAYS} hari.`;
-  if (!(p.targetPct >= 0 && p.targetPct <= 100)) return "Target kehadiran harus 0–100%.";
+  if (!(p.targetMin >= 0 && p.targetMax <= 100 && p.targetMin <= p.targetMax))
+    return "Target kehadiran min/max harus 0–100 dan min ≤ max.";
   for (const [f, t, name] of [
     [p.dayFrom, p.dayTo, "Day"],
     [p.nightFrom, p.nightTo, "Night"],
@@ -78,6 +81,12 @@ export function eachDate(start: string, end: string): string[] {
     d.setUTCDate(d.getUTCDate() + 1);
   }
   return out;
+}
+
+/** How many members to record for one day+shift: a random % in [min,max] of `memberCount`. */
+export function targetCount(memberCount: number, min: number, max: number, rand: number): number {
+  const pct = min + rand * (max - min);
+  return Math.min(memberCount, Math.max(0, Math.round((memberCount * pct) / 100)));
 }
 
 /** Weighted category pick. `rand` in [0,1). Weights need not be normalized. */

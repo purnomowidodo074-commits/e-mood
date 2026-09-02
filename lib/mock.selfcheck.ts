@@ -7,6 +7,7 @@ import {
   rollConfidence,
   mockRawScores,
   shuffle,
+  targetCount,
   validateMockParams,
   parseMockParams,
   type MockParams,
@@ -65,6 +66,16 @@ const sum = Object.values(s).reduce((a, b) => a + b, 0);
 assert.ok(Math.abs(sum - 100) < 0.5, `raw scores sum ${sum}`);
 assert.equal(mockRawScores("HAPPY", 90, 0.9).happy, 90);
 
+// targetCount — inside [min,max] % of memberCount, never exceeds memberCount
+assert.equal(targetCount(200, 75, 95, 0), 150);
+assert.equal(targetCount(200, 75, 95, 1), 190);
+assert.equal(targetCount(200, 80, 80, 0.5), 160); // min == max => fixed
+assert.equal(targetCount(10, 0, 200, 1), 10); // clamps to memberCount
+for (let i = 0; i <= 20; i++) {
+  const c = targetCount(183, 60, 90, i / 20);
+  assert.ok(c >= Math.round(183 * 0.6) && c <= Math.round(183 * 0.9));
+}
+
 // shuffle — same multiset, input untouched
 let seed = 42;
 const rng = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
@@ -77,7 +88,8 @@ assert.deepEqual(src, [1, 2, 3, 4, 5, 6, 7, 8]);
 const good: MockParams = {
   startDate: "2026-08-20",
   endDate: "2026-09-02",
-  targetPct: 85,
+  targetMin: 75,
+  targetMax: 95,
   dayFrom: "06:00",
   dayTo: "09:00",
   nightFrom: "18:00",
@@ -95,6 +107,9 @@ assert.match(validateMockParams({ ...good, startDate: "2026-09-03" })!, /setelah
 assert.match(validateMockParams({ ...good, dayFrom: "10:00", dayTo: "09:00" })!, /Day/);
 assert.match(validateMockParams({ ...good, startDate: "2026-01-01", endDate: "2026-12-31" })!, /maksimal/);
 assert.match(validateMockParams({ ...good, confMin: 80, confMax: 70 })!, /min ≤ max/);
+assert.match(validateMockParams({ ...good, targetMin: 90, targetMax: 70 })!, /Target kehadiran/);
+assert.match(validateMockParams({ ...good, targetMax: 120 })!, /Target kehadiran/);
+assert.equal(validateMockParams({ ...good, targetMin: 50, targetMax: 50 }), null);
 
 // parseMockParams round-trips through a FormData-like getter
 const fd = new Map(Object.entries({ ...good }).map(([k, v]) => [k, String(v)]));
