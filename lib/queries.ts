@@ -353,5 +353,31 @@ export async function listDashboardUsers(): Promise<DashboardUser[]> {
 }
 
 export async function setUserRole(userId: string, role: string) {
-  await sql`update neon_auth."user" set role = ${role} where id = ${userId}::uuid`;
+  // Neon Auth mirrors a new sign-up into neon_auth."user" with a ~2-3s lag, so
+  // right after createDashboardUserAction's sign-up the row isn't there yet and
+  // a plain UPDATE would silently match 0 rows (the "role tak ke-set" bug).
+  // Poll via UPDATE ... RETURNING until it lands. Role changes from the admin
+  // dropdown hit an existing row and return on the first pass.
+  for (let i = 0; i < 25; i++) {
+    const rows = await sql`
+      update neon_auth."user" set role = ${role} where id = ${userId}::uuid returning id
+    `;
+    if (rows.length > 0) return;
+    await new Promise((r) => setTimeout(r, 400));
+  }
+  throw new Error("Neon Auth belum sinkron akun baru — coba set role lagi dari tabel di bawah.");
+}
+
+/**
+ * Removes a dashboard/admin account. We can only delete from the Neon Auth
+ * mirror (neon_auth."user") — the hosted auth service keeps its own copy, but
+ * with no mirror row getCurrentUser() returns null so the account can no longer
+ * reach /dashboard or /admin. followup_by / audit_log.actor FKs are nulled
+ * first so the delete isn't blocked by history (internal tool — the "who" on an
+ * old follow-up matters less than being able to remove a person).
+ */
+export async function deleteDashboardUser(userId: string) {
+  await sql`update mood_records set followup_by = null where followup_by = ${userId}::uuid`;
+  await sql`update audit_log set actor = null where actor = ${userId}::uuid`;
+  await sql`delete from neon_auth."user" where id = ${userId}::uuid`;
 }

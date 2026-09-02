@@ -5,12 +5,13 @@ import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/authClient";
+import { usernameToEmail } from "@/lib/username";
 import { AppBackground } from "@/components/AppBackground";
 import { IconArrowLeft } from "@/components/icons";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,9 +21,12 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    const { error: signInError } = await authClient.signIn.email({ email, password });
+    const { error: signInError } = await authClient.signIn.email({
+      email: usernameToEmail(username),
+      password,
+    });
     if (signInError) {
-      setError("Email atau password salah.");
+      setError("Username atau password salah.");
       setLoading(false);
       return;
     }
@@ -79,16 +83,18 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
             <div>
-              <label htmlFor="email" className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                Email
+              <label htmlFor="username" className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                Username
               </label>
               <input
-                id="email"
-                type="email"
-                autoComplete="email"
+                id="username"
+                type="text"
+                autoComplete="username"
+                autoCapitalize="none"
+                spellCheck={false}
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 className="w-full rounded-lg border border-border bg-surface-2 px-3.5 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary"
               />
             </div>

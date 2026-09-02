@@ -22,11 +22,13 @@ export function CreateUserForm() {
         />
       </label>
       <label className="text-xs font-medium text-muted-foreground">
-        <span className="mb-1 block">Email</span>
+        <span className="mb-1 block">Username</span>
         <input
-          type="email"
-          name="email"
+          type="text"
+          name="username"
           required
+          autoCapitalize="none"
+          spellCheck={false}
           className="block w-56 rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
         />
       </label>

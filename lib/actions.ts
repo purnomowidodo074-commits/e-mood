@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { requireUser } from "./auth";
+import { usernameToEmail } from "./username";
 import * as q from "./queries";
 import type { Category } from "./queries";
 
@@ -113,32 +115,44 @@ export async function createDashboardUserAction(
 ): Promise<{ error?: string }> {
   await requireUser(["admin"]);
   const name = String(formData.get("name") ?? "").trim();
-  const email = String(formData.get("email") ?? "").trim();
+  const username = String(formData.get("username") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const role = String(formData.get("role") ?? "");
 
-  if (!name || !email || password.length < 8 || !role) {
+  if (!name || !username || password.length < 8 || !role) {
     return { error: "Lengkapi semua field. Password minimal 8 karakter." };
   }
 
   // Server-to-server call to Neon Auth's REST API (not the browser SDK) so this
   // doesn't touch the admin's own session cookie on the auth server's domain.
+  // Neon Auth rejects the call with 400 MISSING_ORIGIN unless we forward an
+  // allow-listed Origin — reuse this request's own (same origin the browser SDK
+  // uses to sign in, so it's already allow-listed).
+  const h = await headers();
+  const origin =
+    h.get("origin") ??
+    `${h.get("x-forwarded-proto") ?? "https"}://${h.get("host") ?? ""}`;
   const res = await fetch(`${process.env.NEXT_PUBLIC_NEON_AUTH_URL}/sign-up/email`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, email, password }),
+    headers: { "Content-Type": "application/json", Origin: origin },
+    body: JSON.stringify({ name, email: usernameToEmail(username), password }),
   });
 
   if (!res.ok) {
     const body = await res.json().catch(() => null);
-    return { error: body?.message ?? "Gagal membuat akun (mungkin email sudah dipakai)." };
+    return { error: body?.message ?? "Gagal membuat akun (mungkin username sudah dipakai)." };
   }
 
   const body = (await res.json()) as { user?: { id: string } };
   const userId = body.user?.id;
   if (!userId) return { error: "Akun dibuat tapi ID tidak ditemukan." };
 
-  await q.setUserRole(userId, role);
+  try {
+    await q.setUserRole(userId, role);
+  } catch (e) {
+    revalidatePath("/admin/users");
+    return { error: e instanceof Error ? e.message : "Gagal menetapkan role." };
+  }
   revalidatePath("/admin/users");
   return {};
 }
@@ -149,4 +163,15 @@ export async function setUserRoleAction(formData: FormData) {
   const role = String(formData.get("role"));
   await q.setUserRole(userId, role);
   revalidatePath("/admin/users");
+}
+
+export async function deleteDashboardUserAction(
+  formData: FormData
+): Promise<{ error?: string }> {
+  const me = await requireUser(["admin"]);
+  const userId = String(formData.get("userId"));
+  if (userId === me.id) return { error: "Tidak bisa menghapus akun sendiri." };
+  await q.deleteDashboardUser(userId);
+  revalidatePath("/admin/users");
+  return {};
 }

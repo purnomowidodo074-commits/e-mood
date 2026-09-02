@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { authClient } from "@/lib/authClient";
 import type { Role } from "@/lib/auth";
@@ -16,6 +17,34 @@ const ROLE_LABEL: Record<Role, string> = {
 export function AppNav({ name, role }: { name: string; role: Role }) {
   const pathname = usePathname();
   const router = useRouter();
+
+  // The Neon Auth JWT in our session cookie only lives 15 min and nothing else
+  // refreshes it — so any save after ~15 min idle would bounce to /login
+  // ("role gak kesimpen / mental ke login"). Re-mint it from the still-valid
+  // Neon Auth session cookie (7 days) on mount, every 10 min, and on tab focus.
+  useEffect(() => {
+    let alive = true;
+    async function refresh() {
+      const { data } = await authClient.token().catch(() => ({ data: null }));
+      if (!alive || !data?.token) return;
+      await fetch("/api/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: data.token }),
+      }).catch(() => {});
+    }
+    refresh();
+    const id = setInterval(refresh, 10 * 60 * 1000);
+    function onVisible() {
+      if (document.visibilityState === "visible") refresh();
+    }
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      alive = false;
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, []);
 
   const links = [
     { href: "/dashboard", label: "Dashboard", icon: IconLayoutDashboard, show: true },

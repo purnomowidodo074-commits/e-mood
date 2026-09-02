@@ -1,6 +1,9 @@
+import { requireUser } from "@/lib/auth";
 import { listDashboardUsers } from "@/lib/queries";
 import { setUserRoleAction } from "@/lib/actions";
+import { emailToUsername } from "@/lib/username";
 import { CreateUserForm } from "@/components/CreateUserForm";
+import { DeleteUserButton } from "@/components/DeleteUserButton";
 import { IconUserCog } from "@/components/icons";
 
 const ROLES = [
@@ -10,7 +13,7 @@ const ROLES = [
 ];
 
 export default async function UsersPage() {
-  const users = await listDashboardUsers();
+  const [me, users] = await Promise.all([requireUser(["admin"]), listDashboardUsers()]);
 
   return (
     <div className="anim-stagger flex flex-col gap-6">
@@ -34,8 +37,9 @@ export default async function UsersPage() {
           <thead>
             <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
               <th className="px-5 py-3 font-medium">Nama</th>
-              <th className="px-5 py-3 font-medium">Email</th>
+              <th className="px-5 py-3 font-medium">Username</th>
               <th className="px-5 py-3 font-medium">Role</th>
+              <th className="px-5 py-3 font-medium">Aksi</th>
             </tr>
           </thead>
           <tbody>
@@ -45,7 +49,7 @@ export default async function UsersPage() {
                 className="border-b border-border/60 transition-colors duration-[var(--dur-fast)] hover:bg-surface-2/60"
               >
                 <td className="px-5 py-3 text-foreground/90">{u.name}</td>
-                <td className="px-5 py-3 text-muted-foreground">{u.email}</td>
+                <td className="px-5 py-3 text-muted-foreground">{emailToUsername(u.email)}</td>
                 <td className="px-5 py-3">
                   <form action={setUserRoleAction} className="flex items-center gap-2">
                     <input type="hidden" name="userId" value={u.id} />
@@ -70,6 +74,9 @@ export default async function UsersPage() {
                       Simpan
                     </button>
                   </form>
+                </td>
+                <td className="px-5 py-3">
+                  {u.id !== me.id && <DeleteUserButton userId={u.id} name={u.name} />}
                 </td>
               </tr>
             ))}
