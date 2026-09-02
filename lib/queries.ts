@@ -3,6 +3,10 @@ import { sql } from "./db";
 
 export type Category = "HAPPY" | "NETRAL" | "BADMOOD";
 
+/** device_id stamped on rows from the admin mock-data generator (app/admin/mock),
+ * so they can be wiped separately from real kiosk attendance. */
+export const MOCK_DEVICE_ID = "mock";
+
 /** Noreg selalu 7 digit — kurang dari itu ditambal 0 di depan (data lama Excel bervariasi 5-7 digit). */
 function normalizeNoreg(noreg: string): string {
   return noreg.trim().padStart(7, "0");
@@ -153,13 +157,13 @@ export async function findMemberByNoreg(noreg: string): Promise<KioskMember | nu
 /** FR-1.5: menolak absen ganda di shift yang sama (hari WIB berjalan). */
 export async function findExistingRecordToday(memberId: string, shift: string) {
   const rows = await sql`
-    select id, recorded_at, device_id from mood_records
+    select recorded_at from mood_records
     where member_id = ${memberId}::uuid
       and shift = ${shift}
       and (recorded_at at time zone 'Asia/Jakarta')::date = (now() at time zone 'Asia/Jakarta')::date
     limit 1
   `;
-  return (rows[0] as { id: string; recorded_at: string; device_id: string | null } | undefined) ?? null;
+  return (rows[0] as { recorded_at: string } | undefined) ?? null;
 }
 
 export type RawEmotionScores = Record<
@@ -213,9 +217,20 @@ async function insertRecord(
   rawScores: unknown,
   source: "auto" | "manual",
   framesUsed: number | null,
-  deviceId: string,
-  retriedFromMock = false
+  deviceId: string
 ): Promise<KioskResult> {
+  // Absen kamera asli mengalahkan data demo: hapus semua baris mock member ini
+  // untuk tanggal WIB berjalan (shift apa pun) sebelum mencatat yang asli — jadi
+  // orangnya kehitung sekali saja, di shift aslinya (total harian tetap <= 100%).
+  if (deviceId !== MOCK_DEVICE_ID) {
+    await sql`
+      delete from mood_records
+      where member_id = ${member.id}::uuid
+        and device_id = ${MOCK_DEVICE_ID}
+        and (recorded_at at time zone 'Asia/Jakarta')::date = (now() at time zone 'Asia/Jakarta')::date
+    `;
+  }
+
   try {
     await sql`
       insert into mood_records
@@ -229,13 +244,6 @@ async function insertRecord(
     // 23505 = unique_violation (sudah absen shift ini hari ini — race dengan cek awal)
     if (err instanceof Error && "code" in err && (err as { code?: string }).code === "23505") {
       const existing = await findExistingRecordToday(member.id, shift);
-      // Absen kamera asli menggantikan data demo: kalau record yang menghalangi
-      // adalah baris mock, hapus lalu insert ulang sekali (retriedFromMock guard
-      // mencegah loop kalau ada race).
-      if (!retriedFromMock && existing && existing.device_id === MOCK_DEVICE_ID) {
-        await sql`delete from mood_records where id = ${existing.id}::uuid`;
-        return insertRecord(member, shift, category, confidence, lowConfidence, rawScores, source, framesUsed, deviceId, true);
-      }
       return { status: "duplicate", existingTime: existing?.recorded_at };
     }
     throw err;
@@ -252,9 +260,8 @@ export async function resetAllMoodRecords(): Promise<number> {
 
 // ---- Mock data generator (Admin, app/admin/mock) ----
 // Rows are written with device_id = 'mock' so deleteMockMoodRecords can wipe
-// only the demo data and leave real kiosk attendance untouched.
-
-export const MOCK_DEVICE_ID = "mock";
+// only the demo data and leave real kiosk attendance untouched. insertRecord
+// (above) also uses this to clear a member's mock rows on a real check-in.
 
 export async function listActiveMembersForMock(): Promise<{ id: string; noreg: string; nama: string }[]> {
   return (await sql`select id, noreg, nama from members where is_active`) as {
