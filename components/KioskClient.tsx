@@ -7,6 +7,7 @@ import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { IconUser, IconLayoutDashboard, IconBackspace, IconCamera, IconScanFrame, IconKeypad } from "@/components/icons";
 import { AppBackground } from "@/components/AppBackground";
+import LoaderOne from "@/components/ui/loader-one";
 
 gsap.registerPlugin(useGSAP);
 
@@ -436,8 +437,8 @@ export function KioskClient() {
       )}
 
       {stage === "analyzing" && (
-        <div key="analyzing" className="anim-fade relative flex flex-col items-center gap-3">
-          <div className="h-8 w-8 animate-spin rounded-full border-[3px] border-surface-2 border-t-primary" />
+        <div key="analyzing" className="anim-fade relative flex flex-col items-center gap-4">
+          <LoaderOne />
           <p className="text-lg font-medium text-muted-foreground">Menganalisa...</p>
         </div>
       )}

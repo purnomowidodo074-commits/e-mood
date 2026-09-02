@@ -144,6 +144,23 @@ body {
   }
 }
 
+@keyframes loaderOneBounce {
+  0%, 100% {
+    transform: translateX(0) scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateX(10px) scale(1.2);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .loader-one-dot {
+    animation: loaderOneBounce 1s ease-in-out infinite;
+  }
+}
+
 @keyframes progressFill {
   from {
     width: 0%;
