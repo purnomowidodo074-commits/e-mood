@@ -8,6 +8,7 @@ import {
   mockRawScores,
   shuffle,
   targetCount,
+  splitDayNight,
   validateMockParams,
   parseMockParams,
   type MockParams,
@@ -76,6 +77,16 @@ for (let i = 0; i <= 20; i++) {
   assert.ok(c >= Math.round(183 * 0.6) && c <= Math.round(183 * 0.9));
 }
 
+// splitDayNight — day + night == total, day ≈ dayShare%
+assert.deepEqual(splitDayNight(100, 55), [55, 45]);
+assert.deepEqual(splitDayNight(0, 55), [0, 0]);
+assert.deepEqual(splitDayNight(10, 0), [0, 10]);
+assert.deepEqual(splitDayNight(10, 100), [10, 0]);
+for (const t of [3, 17, 156, 999]) {
+  const [d, n] = splitDayNight(t, 55);
+  assert.equal(d + n, t);
+}
+
 // shuffle — same multiset, input untouched
 let seed = 42;
 const rng = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
@@ -90,6 +101,8 @@ const good: MockParams = {
   endDate: "2026-09-02",
   targetMin: 75,
   targetMax: 95,
+  oneShiftPerDay: true,
+  dayShare: 55,
   dayFrom: "06:00",
   dayTo: "09:00",
   nightFrom: "18:00",
@@ -110,10 +123,16 @@ assert.match(validateMockParams({ ...good, confMin: 80, confMax: 70 })!, /min �
 assert.match(validateMockParams({ ...good, targetMin: 90, targetMax: 70 })!, /Target kehadiran/);
 assert.match(validateMockParams({ ...good, targetMax: 120 })!, /Target kehadiran/);
 assert.equal(validateMockParams({ ...good, targetMin: 50, targetMax: 50 }), null);
+assert.match(validateMockParams({ ...good, dayShare: 140 })!, /Porsi Day/);
+assert.equal(validateMockParams({ ...good, oneShiftPerDay: false, dayShare: 0 }), null);
 
 // parseMockParams round-trips through a FormData-like getter
-const fd = new Map(Object.entries({ ...good }).map(([k, v]) => [k, String(v)]));
+// (oneShiftPerDay is a checkbox: "on" when checked, absent otherwise)
+const fd = new Map(
+  Object.entries({ ...good }).map(([k, v]) => [k, k === "oneShiftPerDay" ? (v ? "on" : "") : String(v)]),
+);
 const parsed = parseMockParams((k) => fd.get(k) ?? "");
 assert.deepEqual(parsed, good);
+assert.equal(parseMockParams((k) => (k === "oneShiftPerDay" ? "" : "1")).oneShiftPerDay, false);
 
 console.log("mock.selfcheck: all assertions passed");

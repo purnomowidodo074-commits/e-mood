@@ -6,8 +6,10 @@ export type MoodCategory = "HAPPY" | "NETRAL" | "BADMOOD";
 export type MockParams = {
   startDate: string; // YYYY-MM-DD (Asia/Jakarta calendar day)
   endDate: string;
-  targetMin: number; // 0..100 of active members; each day+shift draws a random % in [min,max]
+  targetMin: number; // 0..100 of active members; random % in [min,max] drawn per day (oneShiftPerDay) or per day+shift
   targetMax: number;
+  oneShiftPerDay: boolean; // true: a member gets at most one shift/day, target% is the daily total split Day/Night
+  dayShare: number; // 0..100, share of the daily total that goes to Day (only used when oneShiftPerDay)
   dayFrom: string; // "HH:MM"
   dayTo: string;
   nightFrom: string;
@@ -28,6 +30,8 @@ export function parseMockParams(get: (k: string) => string): MockParams {
     endDate: get("endDate"),
     targetMin: Number(get("targetMin")),
     targetMax: Number(get("targetMax")),
+    oneShiftPerDay: get("oneShiftPerDay") === "on",
+    dayShare: Number(get("dayShare")),
     dayFrom: get("dayFrom"),
     dayTo: get("dayTo"),
     nightFrom: get("nightFrom"),
@@ -50,6 +54,7 @@ export function validateMockParams(p: MockParams): string | null {
     return `Rentang maksimal ${MAX_RANGE_DAYS} hari.`;
   if (!(p.targetMin >= 0 && p.targetMax <= 100 && p.targetMin <= p.targetMax))
     return "Target kehadiran min/max harus 0–100 dan min ≤ max.";
+  if (!(p.dayShare >= 0 && p.dayShare <= 100)) return "Porsi Day harus 0–100%.";
   for (const [f, t, name] of [
     [p.dayFrom, p.dayTo, "Day"],
     [p.nightFrom, p.nightTo, "Night"],
@@ -83,10 +88,16 @@ export function eachDate(start: string, end: string): string[] {
   return out;
 }
 
-/** How many members to record for one day+shift: a random % in [min,max] of `memberCount`. */
+/** How many members to record for one day (or one day+shift): a random % in [min,max] of `memberCount`. */
 export function targetCount(memberCount: number, min: number, max: number, rand: number): number {
   const pct = min + rand * (max - min);
   return Math.min(memberCount, Math.max(0, Math.round((memberCount * pct) / 100)));
+}
+
+/** Split a daily attendee count into [Day, Night] by `dayShare`% (rest to Night). */
+export function splitDayNight(total: number, dayShare: number): [number, number] {
+  const day = Math.round((total * dayShare) / 100);
+  return [day, total - day];
 }
 
 /** Weighted category pick. `rand` in [0,1). Weights need not be normalized. */

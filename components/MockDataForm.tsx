@@ -26,6 +26,7 @@ export function MockDataForm({
   );
   const [dist, setDist] = useState({ h: 55, n: 30, b: 15 });
   const distSum = dist.h + dist.n + dist.b;
+  const [oneShift, setOneShift] = useState(true);
 
   const [deleting, startDelete] = useTransition();
   const [armed, setArmed] = useState(false);
@@ -69,9 +70,39 @@ export function MockDataForm({
             <input type="number" name="targetMax" defaultValue={95} min={0} max={100} required className={field} />
           </label>
           <span className="hidden lg:block" />
-          <p className="text-xs text-muted-foreground sm:col-span-2 lg:col-span-3">
-            Tiap hari &amp; shift ambil % acak sendiri di rentang ini — kehadiran jadi variatif. Samakan min = max untuk nilai tetap.
-          </p>
+
+          <div className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:col-span-2 lg:col-span-3">
+            <p className="text-xs text-muted-foreground">
+              % acak diambil per hari{oneShift ? "" : " & shift"} di rentang min–max — kehadiran jadi variatif. Samakan min = max untuk nilai tetap.
+            </p>
+            <label className="flex items-center gap-2 text-xs font-medium text-foreground">
+              <input
+                type="checkbox"
+                name="oneShiftPerDay"
+                checked={oneShift}
+                onChange={(e) => setOneShift(e.target.checked)}
+                className="accent-primary"
+              />
+              1 member = 1 shift per hari
+            </label>
+            <p className="text-xs text-muted-foreground">
+              {oneShift
+                ? "Absen harian (target %) dibagi ke Day & Night — tidak ada yang absen 2x sehari, total ≤ 100% karyawan."
+                : "Day & Night dipilih terpisah — member bisa muncul di dua-duanya, total harian bisa sampai ~200%."}
+            </p>
+            <label className={`${labelCls} ${oneShift ? "" : "opacity-40"}`}>
+              <span className="mb-1 block">Porsi Day (%) — sisanya Night</span>
+              <input
+                type="number"
+                name="dayShare"
+                defaultValue={55}
+                min={0}
+                max={100}
+                disabled={!oneShift}
+                className={`${field} max-w-[8rem]`}
+              />
+            </label>
+          </div>
 
           <label className={labelCls}>
             <span className="mb-1 block">Jam absen Day — dari</span>
@@ -168,7 +199,8 @@ export function MockDataForm({
         )}
         {state.inserted != null && !state.error && (
           <p className="anim-fade rounded-lg bg-happy-bg px-3 py-2 text-sm text-happy">
-            {state.inserted} record dibuat ({state.days} hari × 2 shift, target {state.targetMin}–{state.targetMax}%).{" "}
+            {state.inserted} record dibuat ({state.days} hari, target {state.targetMin}–{state.targetMax}%
+            {state.oneShiftPerDay ? " harian, dibagi Day/Night" : " per shift"}).{" "}
             {state.existing ? `${state.existing} record sudah ada sebelumnya, dilewati.` : ""}
           </p>
         )}

@@ -10,6 +10,7 @@ import {
   eachDate,
   shuffle,
   targetCount,
+  splitDayNight,
   pickCategory,
   rollConfidence,
   randomCheckInISO,
@@ -196,6 +197,7 @@ export type MockGenResult = {
   days?: number;
   targetMin?: number;
   targetMax?: number;
+  oneShiftPerDay?: boolean;
 };
 
 export async function generateMockDataAction(
@@ -217,38 +219,50 @@ export async function generateMockDataAction(
   const taken = new Set(existingKeys.map((k) => `${k.member_id}|${k.day}|${k.shift}`));
   const rng = Math.random;
   const days = eachDate(p.startDate, p.endDate);
-  const shifts = [
-    { name: "Day", from: p.dayFrom, to: p.dayTo },
-    { name: "Night", from: p.nightFrom, to: p.nightTo },
-  ] as const;
+  const win = {
+    Day: { from: p.dayFrom, to: p.dayTo },
+    Night: { from: p.nightFrom, to: p.nightTo },
+  } as const;
   const weights = { HAPPY: p.distHappy, NETRAL: p.distNetral, BADMOOD: p.distBadmood };
+
+  const buildRow = (m: { id: string; noreg: string; nama: string }, day: string, shift: "Day" | "Night"): q.MockInsertRow => {
+    const category = pickCategory(rng(), weights);
+    const { confidence, lowConfidence } = rollConfidence(rng(), rng(), {
+      confMin: p.confMin,
+      confMax: p.confMax,
+      lowConfPct: p.lowConfPct,
+      threshold,
+    });
+    return {
+      memberId: m.id,
+      noreg: m.noreg,
+      nama: m.nama,
+      recordedAt: randomCheckInISO(day, win[shift].from, win[shift].to, rng()),
+      shift,
+      category,
+      confidence,
+      lowConfidence,
+      rawScores: mockRawScores(category, confidence, rng()),
+      framesUsed: 3 + Math.floor(rng() * 6),
+    };
+  };
 
   const rows: q.MockInsertRow[] = [];
   for (const day of days) {
-    for (const sh of shifts) {
-      // each day+shift draws its own attendance % from [targetMin, targetMax]
+    if (p.oneShiftPerDay) {
+      // one attendee pool for the whole day, split Day/Night — a member gets at most one shift/day
       const want = targetCount(members.length, p.targetMin, p.targetMax, rng());
-      const eligible = shuffle(members, rng).filter((m) => !taken.has(`${m.id}|${day}|${sh.name}`));
-      for (const m of eligible.slice(0, Math.min(want, eligible.length))) {
-        const category = pickCategory(rng(), weights);
-        const { confidence, lowConfidence } = rollConfidence(rng(), rng(), {
-          confMin: p.confMin,
-          confMax: p.confMax,
-          lowConfPct: p.lowConfPct,
-          threshold,
-        });
-        rows.push({
-          memberId: m.id,
-          noreg: m.noreg,
-          nama: m.nama,
-          recordedAt: randomCheckInISO(day, sh.from, sh.to, rng()),
-          shift: sh.name,
-          category,
-          confidence,
-          lowConfidence,
-          rawScores: mockRawScores(category, confidence, rng()),
-          framesUsed: 3 + Math.floor(rng() * 6),
-        });
+      const eligible = shuffle(members, rng).filter(
+        (m) => !taken.has(`${m.id}|${day}|Day`) && !taken.has(`${m.id}|${day}|Night`),
+      );
+      const picked = eligible.slice(0, Math.min(want, eligible.length));
+      const [nDay] = splitDayNight(picked.length, p.dayShare);
+      picked.forEach((m, i) => rows.push(buildRow(m, day, i < nDay ? "Day" : "Night")));
+    } else {
+      for (const shift of ["Day", "Night"] as const) {
+        const want = targetCount(members.length, p.targetMin, p.targetMax, rng());
+        const eligible = shuffle(members, rng).filter((m) => !taken.has(`${m.id}|${day}|${shift}`));
+        for (const m of eligible.slice(0, Math.min(want, eligible.length))) rows.push(buildRow(m, day, shift));
       }
     }
   }
@@ -257,7 +271,14 @@ export async function generateMockDataAction(
   revalidatePath("/dashboard");
   revalidatePath("/kiosk/dashboard");
   revalidatePath("/admin/mock");
-  return { inserted, existing: taken.size, days: days.length, targetMin: p.targetMin, targetMax: p.targetMax };
+  return {
+    inserted,
+    existing: taken.size,
+    days: days.length,
+    targetMin: p.targetMin,
+    targetMax: p.targetMax,
+    oneShiftPerDay: p.oneShiftPerDay,
+  };
 }
 
 export async function deleteMockDataAction(): Promise<{ deleted: number }> {
