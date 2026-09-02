@@ -58,6 +58,8 @@ export function MockDataForm({
             <span className="mb-1 block">Tanggal selesai</span>
             <input type="date" name="endDate" defaultValue={defaultEnd} required className={field} />
           </label>
+          <span className="hidden lg:block" />
+
           <label className={labelCls}>
             <span className="mb-1 block">Kehadiran min (% member aktif)</span>
             <input type="number" name="targetMin" defaultValue={75} min={0} max={100} required className={field} />
@@ -66,6 +68,7 @@ export function MockDataForm({
             <span className="mb-1 block">Kehadiran max (%)</span>
             <input type="number" name="targetMax" defaultValue={95} min={0} max={100} required className={field} />
           </label>
+          <span className="hidden lg:block" />
           <p className="text-xs text-muted-foreground sm:col-span-2 lg:col-span-3">
             Tiap hari &amp; shift ambil % acak sendiri di rentang ini — kehadiran jadi variatif. Samakan min = max untuk nilai tetap.
           </p>
