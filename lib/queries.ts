@@ -242,6 +242,102 @@ export async function resetAllMoodRecords(): Promise<number> {
   return rows.length;
 }
 
+// ---- Mock data generator (Admin, app/admin/mock) ----
+// Rows are written with device_id = 'mock' so deleteMockMoodRecords can wipe
+// only the demo data and leave real kiosk attendance untouched.
+
+export const MOCK_DEVICE_ID = "mock";
+
+export async function listActiveMembersForMock(): Promise<{ id: string; noreg: string; nama: string }[]> {
+  return (await sql`select id, noreg, nama from members where is_active`) as {
+    id: string;
+    noreg: string;
+    nama: string;
+  }[];
+}
+
+/** (member_id, WIB day, shift) tuples already present in the range — used to skip
+ * members that already have a record for a given day+shift. */
+export async function listRecordKeysInRange(
+  startDate: string,
+  endDate: string,
+): Promise<{ member_id: string; day: string; shift: string }[]> {
+  return (await sql`
+    select member_id,
+           ((recorded_at at time zone 'Asia/Jakarta')::date)::text as day,
+           shift
+    from mood_records
+    where (recorded_at at time zone 'Asia/Jakarta')::date between ${startDate}::date and ${endDate}::date
+      and member_id is not null
+  `) as { member_id: string; day: string; shift: string }[];
+}
+
+export type MockInsertRow = {
+  memberId: string;
+  noreg: string;
+  nama: string;
+  recordedAt: string; // ISO with +07:00
+  shift: string;
+  category: string;
+  confidence: number;
+  lowConfidence: boolean;
+  rawScores: Record<string, number>;
+  framesUsed: number;
+};
+
+export async function insertMockMoodRecords(rows: MockInsertRow[]): Promise<number> {
+  const COLS = 12;
+  // ponytail: 1000 rows/req keeps params (12k) well under Postgres' 65535 and
+  // the whole generate to ~6 HTTP round-trips for a 2-week × 2-shift run. Bump
+  // to a COPY stream only if a much larger range is ever needed.
+  const CHUNK = 1000;
+  let inserted = 0;
+  for (let i = 0; i < rows.length; i += CHUNK) {
+    const slice = rows.slice(i, i + CHUNK);
+    const params: unknown[] = [];
+    const tuples = slice.map((r, idx) => {
+      const b = idx * COLS;
+      params.push(
+        r.memberId,
+        r.noreg,
+        r.nama,
+        r.recordedAt,
+        r.shift,
+        r.category,
+        r.confidence,
+        r.lowConfidence,
+        JSON.stringify(r.rawScores),
+        "auto",
+        r.framesUsed,
+        MOCK_DEVICE_ID,
+      );
+      return `($${b + 1}::uuid,$${b + 2},$${b + 3},$${b + 4}::timestamptz,$${b + 5},$${b + 6},$${b + 7},$${b + 8},$${b + 9}::jsonb,$${b + 10},$${b + 11},$${b + 12})`;
+    });
+    const result = await sql.query(
+      `insert into mood_records
+         (member_id, noreg, nama, recorded_at, shift, category, confidence, low_confidence, raw_scores, source, frames_used, device_id)
+       values ${tuples.join(",")}
+       on conflict do nothing
+       returning id`,
+      params,
+    );
+    inserted += Array.isArray(result) ? result.length : (result as { rows: unknown[] }).rows.length;
+  }
+  return inserted;
+}
+
+export async function countMockMoodRecords(): Promise<number> {
+  const rows = (await sql`select count(*)::int as c from mood_records where device_id = ${MOCK_DEVICE_ID}`) as {
+    c: number;
+  }[];
+  return rows[0]?.c ?? 0;
+}
+
+export async function deleteMockMoodRecords(): Promise<number> {
+  const rows = await sql`delete from mood_records where device_id = ${MOCK_DEVICE_ID} returning id`;
+  return rows.length;
+}
+
 export async function setFollowUp(
   recordId: string,
   followed_up: boolean,

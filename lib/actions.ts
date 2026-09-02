@@ -4,6 +4,16 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { requireUser } from "./auth";
 import { usernameToEmail } from "./username";
+import {
+  parseMockParams,
+  validateMockParams,
+  eachDate,
+  shuffle,
+  pickCategory,
+  rollConfidence,
+  randomCheckInISO,
+  mockRawScores,
+} from "./mock";
 import * as q from "./queries";
 import type { Category } from "./queries";
 
@@ -174,4 +184,84 @@ export async function deleteDashboardUserAction(
   await q.deleteDashboardUser(userId);
   revalidatePath("/admin/users");
   return {};
+}
+
+// ---- Admin: mock data generator (app/admin/mock) ----
+
+export type MockGenResult = {
+  error?: string;
+  inserted?: number;
+  existing?: number;
+  days?: number;
+  perShift?: number;
+};
+
+export async function generateMockDataAction(
+  _prev: MockGenResult,
+  formData: FormData
+): Promise<MockGenResult> {
+  await requireUser(["admin"]);
+  const p = parseMockParams((k) => String(formData.get(k) ?? ""));
+  const invalid = validateMockParams(p);
+  if (invalid) return { error: invalid };
+
+  const [members, threshold, existingKeys] = await Promise.all([
+    q.listActiveMembersForMock(),
+    q.getConfidenceThreshold(),
+    q.listRecordKeysInRange(p.startDate, p.endDate),
+  ]);
+  if (members.length === 0) return { error: "Tidak ada member aktif." };
+
+  const taken = new Set(existingKeys.map((k) => `${k.member_id}|${k.day}|${k.shift}`));
+  const rng = Math.random;
+  const days = eachDate(p.startDate, p.endDate);
+  const shifts = [
+    { name: "Day", from: p.dayFrom, to: p.dayTo },
+    { name: "Night", from: p.nightFrom, to: p.nightTo },
+  ] as const;
+  const perShift = Math.round((members.length * p.targetPct) / 100);
+  const weights = { HAPPY: p.distHappy, NETRAL: p.distNetral, BADMOOD: p.distBadmood };
+
+  const rows: q.MockInsertRow[] = [];
+  for (const day of days) {
+    for (const sh of shifts) {
+      const eligible = shuffle(members, rng).filter((m) => !taken.has(`${m.id}|${day}|${sh.name}`));
+      for (const m of eligible.slice(0, Math.min(perShift, eligible.length))) {
+        const category = pickCategory(rng(), weights);
+        const { confidence, lowConfidence } = rollConfidence(rng(), rng(), {
+          confMin: p.confMin,
+          confMax: p.confMax,
+          lowConfPct: p.lowConfPct,
+          threshold,
+        });
+        rows.push({
+          memberId: m.id,
+          noreg: m.noreg,
+          nama: m.nama,
+          recordedAt: randomCheckInISO(day, sh.from, sh.to, rng()),
+          shift: sh.name,
+          category,
+          confidence,
+          lowConfidence,
+          rawScores: mockRawScores(category, confidence, rng()),
+          framesUsed: 3 + Math.floor(rng() * 6),
+        });
+      }
+    }
+  }
+
+  const inserted = await q.insertMockMoodRecords(rows);
+  revalidatePath("/dashboard");
+  revalidatePath("/kiosk/dashboard");
+  revalidatePath("/admin/mock");
+  return { inserted, existing: taken.size, days: days.length, perShift };
+}
+
+export async function deleteMockDataAction(): Promise<{ deleted: number }> {
+  await requireUser(["admin"]);
+  const deleted = await q.deleteMockMoodRecords();
+  revalidatePath("/dashboard");
+  revalidatePath("/kiosk/dashboard");
+  revalidatePath("/admin/mock");
+  return { deleted };
 }

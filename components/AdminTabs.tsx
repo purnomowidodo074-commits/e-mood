@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { IconUsers, IconSettings, IconUserCog } from "@/components/icons";
+import { IconUsers, IconSettings, IconUserCog, IconDatabase } from "@/components/icons";
 
 const TABS = [
   { href: "/admin/members", label: "Member", icon: IconUsers },
   { href: "/admin/config", label: "Konfigurasi", icon: IconSettings },
   { href: "/admin/users", label: "User Dashboard", icon: IconUserCog },
+  { href: "/admin/mock", label: "Mock Data", icon: IconDatabase },
 ];
 
 export function AdminTabs() {
